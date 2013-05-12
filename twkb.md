@@ -19,10 +19,13 @@ The first byte of the TWKB-geometry only apears once, no matter what type it is.
 That byte is used like this:
 
 1 bit		endianess 
-	set: little endian
-	unset: big endian
-3 bits describe what serialisation method is used, see section " Delta value array rules"	
-last 4 bits	precission 
+* set: little endian
+* unset: big endian
+
+3 bits describe what serialisation method is used
+	see section " Delta value array rules"	
+l
+ast 4 bits	precission 
 	tells how many decimals to use in coordinates see section Storage of coordinates
 	
 
