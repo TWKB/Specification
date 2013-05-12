@@ -67,7 +67,7 @@ PointArray:
 	first vertex point coordinates as 4 byte integers:<br>
 		INT32 x ndims<br>
 	the rest follows delta value array rules, see below	
-*If this is a nested Linestring (MultiLinestring or GeometryCollection)<br>
+* If this is a nested Linestring (MultiLinestring or GeometryCollection)<br>
 	follows delta value array rules, see below
 	
 #### Type 3, Polygon
@@ -169,7 +169,8 @@ That gives only 8 possibilities, but that will have to do for now
 ## method nr 0 
 This method is tested.  It seems fast and quite compressed. 
 
-as seen from the clients perspective:
+as seen from the clients perspective :
+Reading the first point array in the twkb-geometry
 
 1)	first read INT32 x "number of dimmensions"
 		that is the first point described with full coordinates
