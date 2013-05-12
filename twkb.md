@@ -18,23 +18,19 @@ The first byte of the TWKB-geometry only apears once, no matter what type it is.
 
 That byte is used like this:
 
-1 bit		endianess 
+bit 1	**endianess**
 * set: little endian
 * unset: big endian
 
-3 bits describe what serialisation method is used
-	see section " Delta value array rules"	
-l
-ast 4 bits	precission 
-	tells how many decimals to use in coordinates see section Storage of coordinates
+bit 2-4 **serialization method:** describe what serialisation method is used. See section " Delta value array rules"	
+bit 5-8 **precission:** tells how many decimals to use in coordinates see section Storage of coordinates
 	
 
 ###The type
 
-1 byte
-geometry type and number of dimmensions
+1 byte holding geometry **type** and **number of dimmensions**
 
-first 6 bits gives 63 type positions, we use a few of them:
+bit 1-5 gives 63 type positions, we use a few of them:
 
 1	Point (1 single point)
 2	Linestring
@@ -48,17 +44,17 @@ first 6 bits gives 63 type positions, we use a few of them:
 22	TopoLinestring
 23	TopoPolygon
 
-last 2 bits; number of dimmensions (ndims)
+bit 6-8; number of dimmensions (ndims)
 
 ###Description type by type
 
-#### Type 1, Point
+#### Type 1, **Point**
 UINT32 holding the id of the Point
 
-If this is top level of TWKB:
+* If this is top level of TWKB:
 	coordinates as 4 byte integers:
-		ndims x INT32
-If this is a nested point (Multipoint or GeometryCollection
+		INT32 x ndims
+* If this is a nested point (Multipoint or GeometryCollection
 	follows delta value array rules (see below)
 	
 #### Type 2, Linestring
@@ -69,7 +65,7 @@ UINT32 npoints
 PointArray:
 If this is top level of TWKB:
 	first vertex point coordinates as 4 byte integers:
-		ndims x INT32
+		INT32 x ndims
 	the rest follows delta value array rules (see below)		
 If this is a nested Linestring (MultiLinestring or GeometryCollection
 	follows delta value array rules (see below)
@@ -87,7 +83,7 @@ UINT32 npoints
 PointArray:
 If this is top level of TWKB and first ring:
 	first vertex point coordinates as 4 byte integers:
-		ndims x INT32
+		INT32 x ndims
 	the rest follows delta value array rules (see below)		
 If this is a hole or nested Polygon (MultiPolygon or GeometryCollection
 	follows delta value array rules (see below)
@@ -102,7 +98,7 @@ For each Point
 UINT32 holding the id of the Point
 If this is top level of TWKB:
 	first  point coordinates as 4 byte integers:
-		ndims x INT32
+		INT32 x ndims
 	the rest follows delta value array rules (see below)		
 If this is a nested MultiPoint (GeometryCollection)
 	follows delta value array rules (see below)	
