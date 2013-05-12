@@ -30,7 +30,7 @@ bit 5-8 **precission:** tells how many decimals to use in coordinates see sectio
 
 1 byte holding geometry **type** and **number of dimmensions**
 
-bit 1-5 gives 63 type positions, we use a few of them:
+bit 1-5 gives 31 type positions, we use a few of them:
 
 * 1	Point (1 single point)
 * 2	Linestring
@@ -54,8 +54,8 @@ UINT32 holding the id of the Point
 * If this is top level of TWKB:<br>
 	coordinates as 4 byte integers:<br>
 		INT32 x ndims
-* If this is a nested point (Multipoint or GeometryCollection
-	follows delta value array rules (see below)
+* If this is a nested point (Multipoint or GeometryCollection):<br>
+	follows delta value array rules, see below
 	
 #### Type 2, Linestring
 UINT32 holding the id of the Linestring
@@ -63,12 +63,12 @@ UINT32 npoints
 	a 4 byte integer holding number of vertex-points in linestrings
 	
 PointArray:
-If this is top level of TWKB:
-	first vertex point coordinates as 4 byte integers:
-		INT32 x ndims
-	the rest follows delta value array rules (see below)		
-If this is a nested Linestring (MultiLinestring or GeometryCollection
-	follows delta value array rules (see below)
+* If this is top level of TWKB:<br>
+	first vertex point coordinates as 4 byte integers:<br>
+		INT32 x ndims<br>
+	the rest follows delta value array rules, see below	
+*If this is a nested Linestring (MultiLinestring or GeometryCollection)<br>
+	follows delta value array rules, see below
 	
 #### Type 3, Polygon
 UINT32 holding the id of the Polygon
