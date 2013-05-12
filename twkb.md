@@ -32,17 +32,17 @@ bit 5-8 **precission:** tells how many decimals to use in coordinates see sectio
 
 bit 1-5 gives 63 type positions, we use a few of them:
 
-1	Point (1 single point)
-2	Linestring
-3	Polygon
-4	MultiPoint
-5	MultiLinestring
-6	MultiPolygon
-7	GeometryCollection
-20	PointArray for use in topogeometries  (edges) 
-21	PointArrayIndex
-22	TopoLinestring
-23	TopoPolygon
+* 1	Point (1 single point)
+* 2	Linestring
+* 3	Polygon
+* 4	MultiPoint
+* 5	MultiLinestring
+* 6	MultiPolygon
+* 7	GeometryCollection
+* 20	PointArray for use in topogeometries  (edges) 
+* 21	PointArrayIndex
+* 22	TopoLinestring
+* 23	TopoPolygon
 
 bit 6-8; number of dimmensions (ndims)
 
@@ -51,8 +51,8 @@ bit 6-8; number of dimmensions (ndims)
 #### Type 1, **Point**
 UINT32 holding the id of the Point
 
-* If this is top level of TWKB:
-	coordinates as 4 byte integers:
+* If this is top level of TWKB:<br>
+	coordinates as 4 byte integers:<br>
 		INT32 x ndims
 * If this is a nested point (Multipoint or GeometryCollection
 	follows delta value array rules (see below)
