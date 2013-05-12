@@ -208,7 +208,7 @@ Same thing in other words:
 5)	after a change that new value is valid until a new "size change flag" is met
 
 
-## method nr 1 
+#### method nr 1 
 not tested
 The same as method 0 but have 4 sizes instead of 3:
 INT8
@@ -218,7 +218,7 @@ INT64
 
 The first coordinate is using INT64 instead of INT32
 
-## method nr 2
+#### method nr 2
 not tested
 Similar as method 0 but each dimmensions holds its own sizes. 
 So a change in size for latitude doesn't affect the size we use for longitude.
@@ -232,7 +232,7 @@ cons:
 More sizechanges will be needed which takes some space, and the code will be a little bit more complicated which might makes it slightly slower
 
 
-## method nr 2 (should probably not be in the spec at all)
+#### method nr 2 (should probably not be in the spec at all)
 tested
 map all the sizes, 2 bits per coordinate-value before the delta-values
 Those 2 bits can tell what size to use
