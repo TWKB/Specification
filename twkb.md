@@ -69,9 +69,9 @@ the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
 
 #### Type 3, Polygon
 * UINT32 **ID**
-* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)<br>
-For each ring<br>
-{
+* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+
+For each ring{<br>
 * UINT32 **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
@@ -83,21 +83,21 @@ For each ring<br>
 
 #### Type 5, MultiLineString (with one id for all)
 * UINT32 **ID**
-* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings<br>
-For each linestrings<br>
-{
+* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
+
+For each linestring{<br>
 * UINT32 **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
 
 #### Type 6, MultiPolygon (with one id for all)
 * UINT32 **ID**
-* UINT32 **npolygons** a 4 byte integer holding number of polygons<br>
-For each polygon<br>
-{
-* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)<br>
-For each ring<br>
-{
+* UINT32 **npolygons** a 4 byte integer holding number of polygons
+
+For each polygon{<br>
+* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+
+For each ring{<br>
 * UINT32 **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	<br>
@@ -105,34 +105,34 @@ For each ring<br>
 
 #### Type 7, GeometryCollection 
 * UINT32 **ID**
-* UINT32 **ngeometries** a 4 byte integer holding number of geometries<br>
-For each geometry <br>
-{<br>
+* UINT32 **ngeometries** a 4 byte integer holding number of geometries
+
+For each geometry{<br>
 1 type-byte, see above
 a geometry of the specified type incl ID<br>
 }
 
 #### Type 21, MultiPoint (with individual id)
-* UINT32 **npoints** a 4 byte integer holding number of points<br>
-For each point <br>
-{<br>
+* UINT32 **npoints** a 4 byte integer holding number of points
+
+For each point{<br>
 Point type 1
 }
 
 
 #### Type 22, MultiLineString (with individual id)
 * UINT32 **ID**
-* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings<br>
-For each linestrings <br>
-{<br>
+* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
+
+For each linestring{<br>
 Linestring type 2
 }
 
 #### Type 23, MultiPolygon (with individual id)
 * UINT32 **ID**
-* UINT32 **npolygons** a 4 byte integer holding number of polygons<br>
-For each polygon <br>
-{<br>
+* UINT32 **npolygons** a 4 byte integer holding number of polygons
+
+For each polygon{<br>
 Polygon type 3
 }
 
