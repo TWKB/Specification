@@ -11,6 +11,10 @@ TWKB is meant to be a multi purpose slimmed format for transporting vector geome
 	
 ##The structure
 
+###General rules
+The first point in a TWKB-geometry is represented by it's full coordinates, the rest is delta-values relative to the point before.
+How the deltavalues are serialized is described in the section "Delta value array rules" below.
+
 ###The main header
 
 1 byte
@@ -22,118 +26,84 @@ bit 1	**endianess**
 * set: little endian
 * unset: big endian
 
-bit 2-4 **serialization method:** describe what serialisation method is used. See section " Delta value array rules"	
-bit 5-8 **precission:** tells how many decimals to use in coordinates see section Storage of coordinates
+bit 2-4 **serialization method:** describe what serialisation method is used. See section "Delta value array rules"	
+bit 5-8 **precission:** tells how many decimals to use in coordinates see section "Storage of coordinates"
 	
 
 ###The type
 
 1 byte holding geometry **type** and **number of dimmensions**
 
+this byte with type information will apear after the initial byte in every twkb-geometry, and for each geometry in a geometry collection
+
+The type-byte is used like this:
+
 bit 1-5 gives 31 type positions, we use a few of them:
 
-* 1	Point (1 single point)
-* 2	Linestring
-* 3	Polygon
-* 4	MultiPoint
-* 5	MultiLinestring
-* 6	MultiPolygon
-* 7	GeometryCollection
-* 22	TopoLinestring
-* 23	TopoPolygon
+1.	Point
+2.	Linestring
+3.	Polygon
+4.	MultiPoint
+5.	MultiLinestring
+6.	MultiPolygon
+7.	GeometryCollection
+20.	MultiPoint with id on each point
+21.	MultiLinestring with id on each linestring
+22.	MultiPolygon with id on each polygon
+23.	TopoLinestring
+24.	TopoPolygon
 
-bit 6-8; number of dimmensions (ndims)
+bit 6-8:  number of dimmensions (ndims)
 
 ###Description type by type
 
 #### Type 1, **Point**
 UINT32 holding the id of the Point
 
-* If this is top level of TWKB:<br>
-	coordinates as 4 byte integers:<br>
-		INT32 x ndims
-* If this is a nested point (Multipoint or GeometryCollection):<br>
-	follows delta value array rules, see below
+the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
 	
 #### Type 2, Linestring
-UINT32 holding the id of the Linestring
-UINT32 npoints
-	a 4 byte integer holding number of vertex-points in linestrings
-	
-PointArray:
-* If this is top level of TWKB:<br>
-	first vertex point coordinates as 4 byte integers:<br>
-		INT32 x ndims<br>
-	the rest follows delta value array rules, see below	
-*If this is a nested Linestring (MultiLinestring or GeometryCollection)<br>
-	follows delta value array rules, see below
-	
+* UINT32 **ID**
+* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* a Point Array see section "Delta value array rules" below
+
 #### Type 3, Polygon
-UINT32 holding the id of the Polygon
-UINT32 nrings
-	a 4 byte integer holding number of rings in the polygon (first ring is boundary, the rest is holes)
-	
-for each ring
+* UINT32 **ID**
+* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+For each ring
 {
-UINT32 npoints
-	a 4 byte integer holding number of vertex-points in polygon ring
-	
-PointArray:
-If this is top level of TWKB and first ring:
-	first vertex point coordinates as 4 byte integers:
-		INT32 x ndims
-	the rest follows delta value array rules (see below)		
-If this is a hole or nested Polygon (MultiPolygon or GeometryCollection
-	follows delta value array rules (see below)
+* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* a Point Array see section "Delta value array rules" below
 }	
 
-#### Type 4, MultiPoint
-UINT32 npoints
-	a 4 byte integer holding number of points in the MultiPoint
-
-For each Point
-{
-UINT32 holding the id of the Point
-If this is top level of TWKB:
-	first  point coordinates as 4 byte integers:
-		INT32 x ndims
-	the rest follows delta value array rules (see below)		
-If this is a nested MultiPoint (GeometryCollection)
-	follows delta value array rules (see below)	
-}	
-
+#### Type 4, MultiPoint (with one id for all)
+* UINT32 **ID**
+* UINT32 **npoints** a 4 byte integer holding number of points
+* a Point Array see section "Delta value array rules" below
 
 #### Type 5, MultiLineString
-UINT32 nlinestrings
-	a 4 byte integer holding number of Linestrings in the the MultiLinestring
-
-For each Linestring
+* UINT32 **ID**
+* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
+For each linestrings
 {
-
-see type 2 Linestring
+* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* a Point Array see section "Delta value array rules" below
 }	
-
 
 #### Type 6, MultiPolygon
-UINT32 npolygons
-	a 4 byte integer holding number of polygons in the the Multipolygon
-
+* UINT32 **ID**
+* UINT32 **npolygons** a 4 byte integer holding number of polygons
 For each polygon
 {
-see type 3 polygon
+* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+For each ring
+{
+* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* a Point Array see section "Delta value array rules" below
+}	
 }	
 
-#### Type 7, GeoemtryCollection	
-UINT32 ngeometries
-	a 4 byte integer holding number of subgeoemtries
-for each geometry
-{
-1 byte describing type and number of dimmensions
 
-see description for respective type
-}
-	
-	
 #### Type 22	topo linestring
 UINT32 id
 	the id of the linestring
@@ -151,12 +121,14 @@ UINT16 narrays
 array of id-values to linestrings or points (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 ## Storage of coordinates
+
 All storage is integers. So what happens is that the value gets multiplied with 10^precission-value, and is then rounded to closest integer
 when reading the twkb, the value should be divided with 10^precission-value
 
 So if the precission value is 2, we multiply the value with 100 and rounds the result to closest integer when we create out twkb-geometry and do the reveresed operation when we read it.
 
 ## Delta value array rules
+
 This is about how the coordinates are serialized. The problem to be solved is that we want to use as little space as possible to store out coordinates.
 To do that we cannot just use a fixed size because than we have to use the biggest size possible nessecary. Instead we have to find a way to change the storage size as the need changes. 
 The delta value between two coordinates vary a lot.
