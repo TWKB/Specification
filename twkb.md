@@ -39,8 +39,6 @@ bit 1-5 gives 31 type positions, we use a few of them:
 * 5	MultiLinestring
 * 6	MultiPolygon
 * 7	GeometryCollection
-* 20	PointArray for use in topogeometries  (edges) 
-* 21	PointArrayIndex
 * 22	TopoLinestring
 * 23	TopoPolygon
 
