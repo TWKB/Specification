@@ -47,11 +47,11 @@ bit 1-5 gives 31 type positions, we use a few of them:
 * 5	MultiLinestring
 * 6	MultiPolygon
 * 7	GeometryCollection
-* 20	MultiPoint with id on each point
-* 21	MultiLinestring with id on each linestring
-* 22	MultiPolygon with id on each polygon
-* 23	TopoLinestring
-* 24	TopoPolygon
+* 21	MultiPoint with id on each point
+* 22	MultiLinestring with id on each linestring
+* 23	MultiPolygon with id on each polygon
+* 24	TopoLinestring
+* 25	TopoPolygon
 
 bit 6-8:  number of dimmensions (ndims)
 
@@ -69,11 +69,11 @@ the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
 
 #### Type 3, Polygon
 * UINT32 **ID**
-* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
-For each ring
+* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)<br>
+For each ring<br>
 {
 * UINT32 **npoints** a 4 byte integer holding number of vertex-points
-* a Point Array see section "Delta value array rules" below
+* a Point Array see section "Delta value array rules" below<br>
 }	
 
 #### Type 4, MultiPoint (with one id for all)
@@ -81,44 +81,71 @@ For each ring
 * UINT32 **npoints** a 4 byte integer holding number of points
 * a Point Array see section "Delta value array rules" below
 
-#### Type 5, MultiLineString
+#### Type 5, MultiLineString (with one id for all)
 * UINT32 **ID**
-* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
-For each linestrings
+* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings<br>
+For each linestrings<br>
 {
 * UINT32 **npoints** a 4 byte integer holding number of vertex-points
-* a Point Array see section "Delta value array rules" below
+* a Point Array see section "Delta value array rules" below<br>
 }	
 
-#### Type 6, MultiPolygon
+#### Type 6, MultiPolygon (with one id for all)
 * UINT32 **ID**
-* UINT32 **npolygons** a 4 byte integer holding number of polygons
-For each polygon
+* UINT32 **npolygons** a 4 byte integer holding number of polygons<br>
+For each polygon<br>
 {
-* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
-For each ring
+* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)<br>
+For each ring<br>
 {
 * UINT32 **npoints** a 4 byte integer holding number of vertex-points
-* a Point Array see section "Delta value array rules" below
+* a Point Array see section "Delta value array rules" below<br>
+}	<br>
 }	
-}	
+
+#### Type 7, GeometryCollection 
+* UINT32 **ID**
+* UINT32 **ngeometries** a 4 byte integer holding number of geometries<br>
+For each geometry <br>
+{<br>
+1 type-byte, see above
+a geometry of the specified type incl ID<br>
+}
+
+#### Type 21, MultiPoint (with individual id)
+* UINT32 **npoints** a 4 byte integer holding number of points<br>
+For each point <br>
+{<br>
+Point type 1
+}
+
+
+#### Type 22, MultiLineString (with individual id)
+* UINT32 **ID**
+* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings<br>
+For each linestrings <br>
+{<br>
+Linestring type 2
+}
+
+#### Type 23, MultiPolygon (with individual id)
+* UINT32 **ID**
+* UINT32 **npolygons** a 4 byte integer holding number of polygons<br>
+For each polygon <br>
+{<br>
+Polygon type 3
+}
 
 
 #### Type 22	topo linestring
-UINT32 id
-	the id of the linestring
-UINT16 narrays
-	a 4 byte integer holding number of pointarrays used to build the linestring
-
-array of id-values to linestrings or points (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
+* UINT32 **ID**
+UINT16 **ncomponents** a 2 byte integer holding number of components used to build the linestring
+array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 #### Type 23	topo polygon
-UINT32 id
-	the id of the polygon
-UINT16 narrays
-	a 4 byte integer holding number of pointarrays used to build the polygon
-
-array of id-values to linestrings or points (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
+* UINT32 **ID**
+UINT16 **ncomponents** a 2 byte integer holding number of components used to build the polygon
+array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 ## Storage of coordinates
 
