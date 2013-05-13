@@ -40,18 +40,18 @@ The type-byte is used like this:
 
 bit 1-5 gives 31 type positions, we use a few of them:
 
-1.	Point
-2.	Linestring
-3.	Polygon
-4.	MultiPoint
-5.	MultiLinestring
-6.	MultiPolygon
-7.	GeometryCollection
-20.	MultiPoint with id on each point
-21.	MultiLinestring with id on each linestring
-22.	MultiPolygon with id on each polygon
-23.	TopoLinestring
-24.	TopoPolygon
+* 1	Point
+* 2	Linestring
+* 3	Polygon
+* 4	MultiPoint
+* 5	MultiLinestring
+* 6	MultiPolygon
+* 7	GeometryCollection
+* 20	MultiPoint with id on each point
+* 21	MultiLinestring with id on each linestring
+* 22	MultiPolygon with id on each polygon
+* 23	TopoLinestring
+* 24	TopoPolygon
 
 bit 6-8:  number of dimmensions (ndims)
 
