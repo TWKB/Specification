@@ -137,12 +137,12 @@ Polygon type 3
 }
 
 
-#### Type 22	topo linestring
+#### Type 24	topo linestring
 * UINT32 **ID**
 * UINT16 **ncomponents** a 2 byte integer holding number of components used to build the linestring
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
-#### Type 23	topo polygon
+#### Type 25	topo polygon
 * UINT32 **ID**
 * UINT16 **ncomponents** a 2 byte integer holding number of components used to build the polygon
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
@@ -173,14 +173,14 @@ as seen from the clients perspective:
 
 2.	read one INT8
 		there is two possibilities:
-		*		the value is between -127 and 127
-					That is our delta value. The difference between the first point first dimmension and the second point first dimmension.
-		*		the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. 
-					then read another INT8, the value of that is telling what size that is used instead. The value referes to number of bytes, so 1 is INT8, 2 is INT16 and 4 is INT32
-						then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"
+*	the value is between -127 and 127
+	That is our delta value. The difference between the first point first dimmension and the second point first dimmension.
+*	the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. 
+	then read another INT8, the value of that is telling what size that is used instead. The value referes to number of bytes, so 1 is INT8, 2 is INT16 and 4 is INT32
+	then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"
 
 3.	use the last used size to read again.
-		if the value is the lowest possible number with the current size it is a change in size, and the next INT8 will tell what size to be used.
+	if the value is the lowest possible number with the current size it is a change in size, and the next INT8 will tell what size to be used.
 		
 		
 		
