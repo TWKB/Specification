@@ -171,15 +171,14 @@ as seen from the clients perspective:
 1.	first read INT32 x "number of dimmensions"
 		that is the first point described with full coordinates
 
-2.	read one INT8
-	there is two possibilities:
+2.	read one INT8, that gives two possibilities:
 	
-	first:
+	**first:**<br>
 	the value is between -127 and 127
 	That is our delta value. The difference between the first point first dimmension and the second point first dimmension.
 	
-	second:
-	the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. 
+	**second:**<br>
+	the value is -128 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. 
 	then read another INT8, the value of that is telling what size that is used instead. The value referes to number of bytes, so 1 is INT8, 2 is INT16 and 4 is INT32
 	then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"
 
