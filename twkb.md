@@ -191,18 +191,18 @@ Same thing in other words:
 
 1.	first coordinate is stored with 1 INT32 per dimmension
 2.	next one is always INT8 giving a delta value or signaling a change in size
-3.	Changes in size is signaled by the lowest possible number that the storage size can hold:
-		INT8 -> -128<br>	
-		INT16 -> -32768<br>
-		INT32 -> -2147483648<br>		
-		this can be evaluted from:<br>
-		INT8 -> -1<<7<br>
-		INT16 -> -1<<15<br>
-		INT32 -> -1<<31<br>
-4.	first byte after "size change flag" tells the new current flag:
-		1 -> INT8<br>
-		2 -> INT16<br>
-		3 -> INT32	<br>	
+3.	Changes in size is signaled by the lowest possible number that the storage size can hold:<br>
+	INT8 -> -128<br>	
+	INT16 -> -32768<br>
+	INT32 -> -2147483648<br>		
+	this can be evaluted from:<br>
+	INT8 -> -1<<7<br>
+	INT16 -> -1<<15<br>
+	INT32 -> -1<<31<br>
+4.	first byte after "size change flag" tells the new current flag:<br>
+	1 -> INT8<br>
+	2 -> INT16<br>
+	3 -> INT32	<br>	
 5.	after a change that new value is valid until a new "size change flag" is met
 
 
