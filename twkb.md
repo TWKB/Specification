@@ -1,6 +1,6 @@
 #TWKB
 
-First Draft 
+First Draft <br>
 version 0.01
 
 Specification for "Tiny WKB", TWKB
@@ -26,7 +26,7 @@ bit 1	**endianess**
 * set: little endian
 * unset: big endian
 
-bit 2-4 **serialization method:** describe what serialisation method is used. See section "Delta value array rules"	
+bit 2-4 **serialization method:** describe what serialisation method is used. See section "Delta value array rules"	<br>
 bit 5-8 **precission:** tells how many decimals to use in coordinates see section "Storage of coordinates"
 	
 
@@ -50,8 +50,9 @@ bit 1-5 gives 31 type positions, we use a few of them:
 * 21	MultiPoint with id on each point
 * 22	MultiLinestring with id on each linestring
 * 23	MultiPolygon with id on each polygon
-* 24	TopoLinestring
-* 25	TopoPolygon
+* 24	GeometryCollection with id on each collection
+* 25	TopoLinestring
+* 26	TopoPolygon
 
 bit 6-8:  number of dimmensions (ndims)
 
@@ -113,6 +114,7 @@ a geometry of the specified type incl ID<br>
 }
 
 #### Type 21, MultiPoint (with individual id)
+
 * UINT32 **npoints** a 4 byte integer holding number of points
 
 For each point{<br>
@@ -121,7 +123,7 @@ Point type 1
 
 
 #### Type 22, MultiLineString (with individual id)
-* UINT32 **ID**
+
 * UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
 
 For each linestring{<br>
@@ -129,11 +131,19 @@ Linestring type 2
 }
 
 #### Type 23, MultiPolygon (with individual id)
-* UINT32 **ID**
+
 * UINT32 **npolygons** a 4 byte integer holding number of polygons
 
 For each polygon{<br>
 Polygon type 3
+}
+
+#### Type 24, MultiGometryCollection (with individual id)
+
+* UINT32 **npolygons** a 4 byte integer holding number of polygons
+
+For each collection (MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
+MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections
 }
 
 
