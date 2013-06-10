@@ -253,12 +253,15 @@ compared to method 0: <br>
 pros: <br>
 * for example the northern coastline of an iland will have bigger deltas on lon than on lat. With this method we can store those dimmensions on different size.
 * If we use one dimmension for something else than spatial information like temperatures, the correlation between the need of size between different dimmensions is very bad.
+* For pointclouds this method will be superior since totally different type of data will be stored as dimmensions. Then those dimmensions needs there own storage handling.
 
 cons: <br>
 * More sizechanges will be needed which takes some space, and the code will be a little bit more complicated which might makes it slightly slower
 
+For this method to work properly it is important to also include some mechanism that "looks forward" so the decrease of size not is done when the next coordinate will force increasing it again.</br>
+There is ideas for a "rolling cache" that can handle this
 
-### method nr 2 (should probably not be in the spec at all) <br>
+### method nr 3 (should probably not be in the spec at all) <br>
 tested <br>
 map all the sizes, 2 bits per coordinate-value before the delta-values <br>
 Those 2 bits can tell what size to use <br>
