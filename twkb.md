@@ -32,7 +32,7 @@ bit 5-8 **precission:** tells how many decimals to use in coordinates see sectio
 
 ###The type
 
-1 byte holding geometry **type** and **number of dimmensions**
+* UINT8 holding geometry **type** and **number of dimmensions**
 
 this byte with type information will apear after the initial byte in every twkb-geometry, and for each geometry in a geometry collection
 
@@ -109,8 +109,8 @@ For each ring{<br>
 * UINT32 **ngeometries** a 4 byte integer holding number of geometries
 
 For each geometry{<br>
-1 type-byte, see above
-a geometry of the specified type incl ID<br>
+* UINT8 describing type and ndim  of subgeometry<br>
+* a geometry of the specified type without ID<br>
 }
 
 #### Type 21, MultiPoint (with individual id)
@@ -118,7 +118,7 @@ a geometry of the specified type incl ID<br>
 * UINT32 **npoints** a 4 byte integer holding number of points
 
 For each point{<br>
-Point type 1
+* Point of type 1
 }
 
 
@@ -127,7 +127,7 @@ Point type 1
 * UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
 
 For each linestring{<br>
-Linestring type 2
+* Linestring of type 2
 }
 
 #### Type 23, MultiPolygon (with individual id)
@@ -135,17 +135,22 @@ Linestring type 2
 * UINT32 **npolygons** a 4 byte integer holding number of polygons
 
 For each polygon{<br>
-Polygon type 3
+* Polygon of type 3
 }
 
 #### Type 24, MultiGometryCollection (with individual id)
 
 * UINT32 **npolygons** a 4 byte integer holding number of polygons
 
-For each collection (MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
-MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections
+For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
+* MultiPoint of type 4
+or
+* MultiLinestrings of type 5
+or 
+* MultiPolygon of type 6
+or
+* GeometryCollection of type 7
 }
-
 
 #### Type 24	topo linestring
 * UINT32 **ID**
@@ -159,61 +164,61 @@ MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections
 
 ## Storage of coordinates
 
-All storage is **integers**. So what happens is that the value gets multiplied with 10^precission-value, and is then rounded to closest integer
+All storage is **integers**. So what happens is that the value gets multiplied with 10^precission-value, and is then rounded to closest integer<br>
 when reading the twkb, the value should be divided with 10^precission-value
 
 So if the precission value is 2, we multiply the value with 100 and rounds the result to closest integer when we create out twkb-geometry and do the reveresed operation when we read it.
 
 ## Delta value array rules
 
-This is about how the coordinates are serialized. The problem to be solved is that we want to use as little space as possible to store out coordinates.
-To do that we cannot just use a fixed size because than we have to use the biggest size possible nessecary. Instead we have to find a way to change the storage size as the need changes. 
-The delta value between two coordinates vary a lot.
+This is about how the coordinates are serialized. The problem to be solved is that we want to use as little space as possible to store our coordinates.<br>
+To do that we cannot just use a fixed data type because than we have to use the biggest size possible nessecary. Instead we have to find a way to change the storage size as the need changes. <br>
+The delta value between two coordinates vary a lot.<br>
 
-This can be solved in a lot oof ways, each one with it's pros and cons. In the first TWKB-byte, bit nr 2-4 describes which serialisation method that is used. 
+This can be solved in a lot of ways, each one with it's pros and cons. In the first TWKB-byte, bit nr 2-4 describes which serialisation method that is used. <br>
 That gives only 8 possibilities, but that will have to do for now
 
 ### method nr 0 <br>
 This method is tested.  It seems fast and quite compressed. 
 
-as seen from the clients perspective :
-Reading the first point array in the twkb-geometry
+as seen from the clients perspective :<br>
+Reading the first point array in the twkb-geometry<br>
 
-1)	first read INT32 x "number of dimmensions"
+* 1)	first read INT32 x "number of dimmensions"<br>
 		that is the first point described with full coordinates
 
-2)	read one INT8
-		there is two possibilities:
-		a)		the value is between -127 and 127
-					That is our delta value. The difference between the first point first dimmension and the second point first dimmension.
-		b)		the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. 
-					then read another INT8, the value of that is telling what size that is used instead. The value referes to number of bytes, so 1 is INT8, 2 is INT16 and 4 is INT32
-						then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"
+* 2)	read one INT8<br>
+		there is two possibilities:<br>
+**		a)		the value is between -127 and 127<br>
+					That is our delta value. The difference between the first point first dimmension and the second point first dimmension.<br>
+**		b)		the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. <br>
+					then read another INT8, the value of that is telling what size that is used instead. The value referes to number of bytes, so 1 is INT8, 2 is INT16 and 4 is INT32<br>
+						then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"<br>
 
-3)	use the last used size to read again.
+* 3)	use the last used size to read again.<br>
 		if the value is the lowest possible number with the current size it is a change in size, and the next INT8 will tell what size to be used.
 		
 		
 		
 Same thing in other words:
 
-1)	first coordinate is stored with 1 INT32 per dimmension
-2)	next one is always INT8 giving a delta value or signaling a change in size
-3)	Changes in size is signaled by the lowest possible number that the storage size can hold:
-		INT8 -> -128	
-		INT16 -> -32768
-		INT32 -> -2147483648
+* 1)	first coordinate is stored with 1 INT32 per dimmension
+* 2)	next one is always INT8 giving a delta value or signaling a change in size
+* 3)	Changes in size is signaled by the lowest possible number that the storage size can hold:
+		INT8 -> -128	<br>
+		INT16 -> -32768<br>
+		INT32 -> -2147483648<br>
 		
-		this can be evaluted from:
-		INT8 -> -1<<7
-		INT16 -> -1<<15
-		INT32 -> -1<<31
-4)	first byte after "size change flag" tells the new current flag:
-		1 -> INT8
-		2 -> INT16
-		3 -> INT32
+		this can be evaluted from:<br>
+		INT8 -> -1<<7<br>
+		INT16 -> -1<<15<br>
+		INT32 -> -1<<31<br>
+* 4)	first byte after "size change flag" tells the new current flag:
+		1 -> INT8<br>
+		2 -> INT16<br>
+		3 -> INT32<br>
 		
-5)	after a change that new value is valid until a new "size change flag" is met
+* 5)	after a change that new value is valid until a new "size change flag" is met
 
 
 ### method nr 1  <br>
