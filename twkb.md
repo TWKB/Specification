@@ -203,7 +203,7 @@ Reading the first point array in the twkb-geometry<br>
 		
 		
 		
-Same thing in other words:
+####Same thing in other words:
 
 <ol>
 <li>first coordinate is stored with 1 INT32 per dimmension</li>
@@ -222,11 +222,11 @@ Same thing in other words:
 	</ul>
 </li>
 <li>first byte after "size change flag" tells the new current flag:
-	<ol>
+	<ul>
 		<li>1-> INT8</li>
 		<li>2 -> INT16</li>
 		<li>3 -> INT32</li>
-	</ol>
+	</ul>
 </li>		
 <li>after a change that new value is valid until a new "size change flag" is met</li>
 </ol>
