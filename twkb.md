@@ -166,7 +166,7 @@ The delta value between two coordinates vary a lot.
 This can be solved in a lot oof ways, each one with it's pros and cons. In the first TWKB-byte, bit nr 2-4 describes which serialisation method that is used. 
 That gives only 8 possibilities, but that will have to do for now
 
-## method nr 0 
+### method nr 0 <br>
 This method is tested.  It seems fast and quite compressed. 
 
 as seen from the clients perspective :
@@ -209,34 +209,34 @@ Same thing in other words:
 5)	after a change that new value is valid until a new "size change flag" is met
 
 
-#### method nr 1 
-not tested
-The same as method 0 but have 4 sizes instead of 3:
-INT8
-INT16
-INT32
-INT64
+### method nr 1  <br>
+not tested <br>
+The same as method 0 but have 4 sizes instead of 3: <br>
+INT8 <br>
+INT16 <br>
+INT32 <br>
+INT64 <br>
 
 The first coordinate is using INT64 instead of INT32
 
-#### method nr 2
-not tested
-Similar as method 0 but each dimmensions holds its own sizes. 
-So a change in size for latitude doesn't affect the size we use for longitude.
+### method nr 2 <br>
+not tested <br>
+Similar as method 0 but each dimmensions holds its own sizes.  <br>
+So a change in size for latitude doesn't affect the size we use for longitude. <br>
 
-compared to method 0:
-pros:
-1)	for example the northern coastline of an iland will have bigger deltas on lon than on lat. With this method we can store those dimmensions on different size.
-2)	If we use one dimmension for something else than spatial information like temperatures, the correlation between the need of size between different dimmensions is very bad.
+compared to method 0: <br>
+pros: <br>
+* for example the northern coastline of an iland will have bigger deltas on lon than on lat. With this method we can store those dimmensions on different size.
+* If we use one dimmension for something else than spatial information like temperatures, the correlation between the need of size between different dimmensions is very bad.
 
-cons:
-More sizechanges will be needed which takes some space, and the code will be a little bit more complicated which might makes it slightly slower
+cons: <br>
+* More sizechanges will be needed which takes some space, and the code will be a little bit more complicated which might makes it slightly slower
 
 
-#### method nr 2 (should probably not be in the spec at all)
-tested
-map all the sizes, 2 bits per coordinate-value before the delta-values
-Those 2 bits can tell what size to use
+### method nr 2 (should probably not be in the spec at all) <br>
+tested <br>
+map all the sizes, 2 bits per coordinate-value before the delta-values <br>
+Those 2 bits can tell what size to use <br>
 
 This is tested and was slightly slower and produced a littlle bigger result on the tested datasets.
 
