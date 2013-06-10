@@ -184,50 +184,63 @@ This method is tested.  It seems fast and quite compressed.
 as seen from the clients perspective :<br>
 Reading the first point array in the twkb-geometry<br>
 
-* 1)	first read INT32 x "number of dimmensions"<br>
-		that is the first point described with full coordinates
-
-* 2)	read one INT8<br>
-		there is two possibilities:<br>
-**		a)		the value is between -127 and 127<br>
-					That is our delta value. The difference between the first point first dimmension and the second point first dimmension.<br>
-**		b)		the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. <br>
+<ol>
+<li>first read INT32 x "number of dimmensions"<br>
+		that is the first point described with full coordinates</li>
+<li>read one INT8<br>
+		there is two possibilities:
+		<ol>
+		<li>	the value is between -127 and 127<br>
+					That is our delta value. The difference between the first point first dimmension and the second point first dimmension.</li>
+		<li>the value is -127 (or binary value 11111111 on most systems), it is a flag of that the coordinate didn't fit in INT8. <br>
 					then read another INT8, the value of that is telling what size that is used instead. The value referes to number of bytes, so 1 is INT8, 2 is INT16 and 4 is INT32<br>
-						then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"<br>
-
-* 3)	use the last used size to read again.<br>
-		if the value is the lowest possible number with the current size it is a change in size, and the next INT8 will tell what size to be used.
+						then we can read our coordinate using that size. That new size is now the current size and will be used until we meet a new "change in size flag"</li>
+		</ol>
+</li>
+<li>use the last used size to read again.<br>
+		if the value is the lowest possible number with the current size it is a change in size, and the next INT8 will tell what size to be used.</li>
+</ol>
 		
 		
 		
 Same thing in other words:
 
-* 1)	first coordinate is stored with 1 INT32 per dimmension
-* 2)	next one is always INT8 giving a delta value or signaling a change in size
-* 3)	Changes in size is signaled by the lowest possible number that the storage size can hold:
-		INT8 -> -128	<br>
-		INT16 -> -32768<br>
-		INT32 -> -2147483648<br>
-		
-		this can be evaluted from:<br>
-		INT8 -> -1<<7<br>
-		INT16 -> -1<<15<br>
-		INT32 -> -1<<31<br>
-* 4)	first byte after "size change flag" tells the new current flag:
-		1 -> INT8<br>
-		2 -> INT16<br>
-		3 -> INT32<br>
-		
-* 5)	after a change that new value is valid until a new "size change flag" is met
+<ol>
+<li>first coordinate is stored with 1 INT32 per dimmension</li>
+<li>next one is always INT8 giving a delta value or signaling a change in size</li>
+<li>Changes in size is signaled by the lowest possible number that the storage size can hold:
+	<ul>
+		<li>INT8 -> -128</li>
+		<li>INT16 -> -32768</li>
+		<li>INT32 -> -2147483648</li>
+	</ul>
+		this can be evaluted from:
+	<ul>
+		<li>INT8 -> -1<<7</li>
+		<li>INT16 -> -1<<15</li>
+		<li>INT32 -> -1<<31</li>
+	</ul>
+</li>
+<li>first byte after "size change flag" tells the new current flag:
+	<ol>
+		<li>1-> INT8</li>
+		<li>2 -> INT16</li>
+		<li>3 -> INT32</li>
+	</ol>
+</li>		
+<li>after a change that new value is valid until a new "size change flag" is met</li>
+</ol>
 
 
 ### method nr 1  <br>
 not tested <br>
 The same as method 0 but have 4 sizes instead of 3: <br>
-INT8 <br>
-INT16 <br>
-INT32 <br>
-INT64 <br>
+<ol>
+<li>INT8 </li>
+<li>INT16</li>
+<li>INT32</li>
+<li>INT64</li>
+</ol>
 
 The first coordinate is using INT64 instead of INT32
 
