@@ -1,7 +1,7 @@
 #TWKB
 
 First Draft <br>
-version 0.01
+version 0.05
 
 Specification for "Tiny WKB", TWKB
 	
@@ -13,7 +13,9 @@ TWKB is meant to be a multi purpose slimmed format for transporting vector geome
 
 ###General rules
 The first point in a TWKB-geometry is represented by it's full coordinates, the rest is delta-values relative to the point before.
-How the deltavalues are serialized is described in the section "Delta value array rules" below.
+How the deltavalues are serialized is described in the section "Delta value array rules" below.<br>
+Datatypes used is of fixed length or VarInt. VarInt is a vay of encoding variable length Integers described here:
+https://developers.google.com/protocol-buffers/docs/encoding#varints
 
 ###The main header
 
@@ -59,63 +61,63 @@ bit 6-8:  number of dimmensions (ndims)
 ###Description type by type
 
 #### Type 1, **Point**
-UINT32 holding the id of the Point
+varInt holding the id of the Point
 
 the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
 	
 #### Type 2, Linestring
-* UINT32 **ID**
-* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* varInt **ID**
+* varInt **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below
 
 #### Type 3, Polygon
-* UINT32 **ID**
-* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+* varInt **ID**
+* varInt **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
 
 For each ring{<br>
-* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
 
 #### Type 4, MultiPoint (with one id for all)
-* UINT32 **ID**
-* UINT32 **npoints** a 4 byte integer holding number of points
+* varInt **ID**
+* varInt **npoints** a 4 byte integer holding number of points
 * a Point Array see section "Delta value array rules" below
 
 #### Type 5, MultiLineString (with one id for all)
-* UINT32 **ID**
-* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
+* varInt **ID**
+* varInt **nlinestrings** a 4 byte integer holding number of linestrings
 
 For each linestring{<br>
-* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
 
 #### Type 6, MultiPolygon (with one id for all)
-* UINT32 **ID**
-* UINT32 **npolygons** a 4 byte integer holding number of polygons
+* varInt **ID**
+* varInt **npolygons** a 4 byte integer holding number of polygons
 
 For each polygon{<br>
-* UINT32 **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+* varInt **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
 
 For each ring{<br>
-* UINT32 **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** a 4 byte integer holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	<br>
 }	
 
 #### Type 7, GeometryCollection 
-* UINT32 **ID**
-* UINT32 **ngeometries** a 4 byte integer holding number of geometries
+* varInt **ID**
+* varInt **ngeometries** a 4 byte integer holding number of geometries
 
 For each geometry{<br>
-* UINT8 describing type and ndim  of subgeometry<br>
+* varInt describing type and ndim  of subgeometry<br>
 * a geometry of the specified type without ID<br>
 }
 
 #### Type 21, MultiPoint (with individual id)
 
-* UINT32 **npoints** a 4 byte integer holding number of points
+* varInt **npoints** a 4 byte integer holding number of points
 
 For each point{<br>
 * Point of type 1
@@ -124,7 +126,7 @@ For each point{<br>
 
 #### Type 22, MultiLineString (with individual id)
 
-* UINT32 **nlinestrings** a 4 byte integer holding number of linestrings
+* varInt **nlinestrings** a 4 byte integer holding number of linestrings
 
 For each linestring{<br>
 * Linestring of type 2
@@ -132,7 +134,7 @@ For each linestring{<br>
 
 #### Type 23, MultiPolygon (with individual id)
 
-* UINT32 **npolygons** a 4 byte integer holding number of polygons
+* varInt **npolygons** a 4 byte integer holding number of polygons
 
 For each polygon{<br>
 * Polygon of type 3
@@ -140,7 +142,7 @@ For each polygon{<br>
 
 #### Type 24, MultiGometryCollection (with individual id)
 
-* UINT32 **npolygons** a 4 byte integer holding number of polygons
+* varInt **npolygons** a 4 byte integer holding number of polygons
 
 For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
 * MultiPoint of type 4
@@ -153,13 +155,13 @@ or
 }
 
 #### Type 24	topo linestring
-* UINT32 **ID**
-* UINT16 **ncomponents** a 2 byte integer holding number of components used to build the linestring
+* varInt **ID**
+* varInt **ncomponents** a 2 byte integer holding number of components used to build the linestring
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 #### Type 25	topo polygon
-* UINT32 **ID**
-* UINT16 **ncomponents** a 2 byte integer holding number of components used to build the polygon
+* varInt **ID**
+* varInt **ncomponents** a 2 byte integer holding number of components used to build the polygon
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 ## Storage of coordinates
@@ -233,16 +235,10 @@ Reading the first point array in the twkb-geometry<br>
 
 
 ### method nr 1  <br>
-not tested <br>
-The same as method 0 but have 4 sizes instead of 3: <br>
-<ol>
-<li>INT8 </li>
-<li>INT16</li>
-<li>INT32</li>
-<li>INT64</li>
-</ol>
+tested <br>
+Also here the first coordinate is stored as full value and the ones after that as delta values<br>
+The difference is that here all values is stored as signed varInt with of maximum 8 bytes<br>
 
-The first coordinate is using INT64 instead of INT32
 
 ### method nr 2 <br>
 not tested <br>
