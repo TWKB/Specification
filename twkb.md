@@ -13,7 +13,7 @@ TWKB is meant to be a multi purpose slimmed format for transporting vector geome
 
 ###General rules
 The first point in a TWKB-geometry is represented by it's full coordinates, the rest is delta-values relative to the point before.
-How the deltavalues are serialized is described in the section "Delta value array rules" below.<br>
+How the deltavalues are serialized is described in the section "Delta value array rules" below.<br><br>
 Datatypes used is of fixed length or VarInt. VarInt is a vay of encoding variable length Integers described here:
 https://developers.google.com/protocol-buffers/docs/encoding#varints
 
@@ -237,8 +237,8 @@ Reading the first point array in the twkb-geometry<br>
 ### method nr 1  <br>
 tested <br>
 Also here the first coordinate is stored as full value and the ones after that as delta values<br>
-The difference is that here all values is stored as signed varInt with of maximum 8 bytes<br>
-
+The difference is that here all values is stored as signed varInt with of maximum 8 bytes<br><br>
+This seems to be the most promising method.
 
 ### method nr 2 <br>
 not tested <br>
