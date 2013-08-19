@@ -1,6 +1,6 @@
 #TWKB
 
-First Draft <br>
+Second Draft <br>
 version 0.05
 
 Specification for "Tiny WKB", TWKB
