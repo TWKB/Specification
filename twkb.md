@@ -142,7 +142,7 @@ For each polygon{<br>
 
 #### Type 24, MultiGometryCollection (with individual id)
 
-* varInt **npolygons** a 4 byte integer holding number of polygons
+* varInt **collections** a 4 byte integer holding number of collections
 
 For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
 * MultiPoint of type 4
@@ -154,12 +154,12 @@ or
 * GeometryCollection of type 7
 }
 
-#### Type 24	topo linestring
+#### Type 25	topo linestring
 * varInt **ID**
 * varInt **ncomponents** a 2 byte integer holding number of components used to build the linestring
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
-#### Type 25	topo polygon
+#### Type 26	topo polygon
 * varInt **ID**
 * varInt **ncomponents** a 2 byte integer holding number of components used to build the polygon
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
