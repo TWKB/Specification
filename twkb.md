@@ -67,48 +67,48 @@ the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
 	
 #### Type 2, Linestring
 * varInt **ID**
-* varInt **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below
 
 #### Type 3, Polygon
 * varInt **ID**
-* varInt **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+* varInt **nrings** holding number of rings (first ring is boundary, the rest is holes)
 
 For each ring{<br>
-* varInt **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
 
 #### Type 4, MultiPoint (with one id for all)
 * varInt **ID**
-* varInt **npoints** a 4 byte integer holding number of points
+* varInt **npoints** holding number of points
 * a Point Array see section "Delta value array rules" below
 
 #### Type 5, MultiLineString (with one id for all)
 * varInt **ID**
-* varInt **nlinestrings** a 4 byte integer holding number of linestrings
+* varInt **nlinestrings**  holding number of linestrings
 
 For each linestring{<br>
-* varInt **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
 
 #### Type 6, MultiPolygon (with one id for all)
 * varInt **ID**
-* varInt **npolygons** a 4 byte integer holding number of polygons
+* varInt **npolygons** holding number of polygons
 
 For each polygon{<br>
-* varInt **nrings** a 4 byte integer holding number of rings (first ring is boundary, the rest is holes)
+* varInt **nrings** holding number of rings (first ring is boundary, the rest is holes)
 
 For each ring{<br>
-* varInt **npoints** a 4 byte integer holding number of vertex-points
+* varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	<br>
 }	
 
 #### Type 7, GeometryCollection 
 * varInt **ID**
-* varInt **ngeometries** a 4 byte integer holding number of geometries
+* varInt **ngeometries** holding number of geometries
 
 For each geometry{<br>
 * varInt describing type and ndim  of subgeometry<br>
@@ -117,7 +117,7 @@ For each geometry{<br>
 
 #### Type 21, MultiPoint (with individual id)
 
-* varInt **npoints** a 4 byte integer holding number of points
+* varInt **npoints** holding number of points
 
 For each point{<br>
 * Point of type 1
@@ -126,7 +126,7 @@ For each point{<br>
 
 #### Type 22, MultiLineString (with individual id)
 
-* varInt **nlinestrings** a 4 byte integer holding number of linestrings
+* varInt **nlinestrings** holding number of linestrings
 
 For each linestring{<br>
 * Linestring of type 2
@@ -134,7 +134,7 @@ For each linestring{<br>
 
 #### Type 23, MultiPolygon (with individual id)
 
-* varInt **npolygons** a 4 byte integer holding number of polygons
+* varInt **npolygons** holding number of polygons
 
 For each polygon{<br>
 * Polygon of type 3
@@ -142,7 +142,7 @@ For each polygon{<br>
 
 #### Type 24, MultiGometryCollection (with individual id)
 
-* varInt **collections** a 4 byte integer holding number of collections
+* varInt **collections** holding number of collections
 
 For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
 * MultiPoint of type 4
@@ -156,12 +156,12 @@ or
 
 #### Type 25	topo linestring
 * varInt **ID**
-* varInt **ncomponents** a 2 byte integer holding number of components used to build the linestring
+* varInt **ncomponents** holding number of components used to build the linestring
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 #### Type 26	topo polygon
 * varInt **ID**
-* varInt **ncomponents** a 2 byte integer holding number of components used to build the polygon
+* varInt **ncomponents** holding number of components used to build the polygon
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
 ## Storage of coordinates
