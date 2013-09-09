@@ -55,7 +55,7 @@ bit 1-5 gives 31 type positions, we use a few of them:
 * 25	TopoLinestring
 * 26	TopoPolygon
 
-bit 6-8:  number of dimmensions (ndims)
+bit 6-8:  number of dimensions (ndims)
 
 ###Description type by type
 
@@ -70,7 +70,7 @@ bit 6-8:  number of dimmensions (ndims)
 
 #### Type 3, Polygon
 * varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **nrings** holding number of rings (first ring is boundary, the rest is holes)
+* varInt **nrings** holding number of rings (first ring is boundary, the others are holes)
 
 For each ring{<br>
 * varInt **npoints** holding number of vertex-points
