@@ -28,7 +28,7 @@ bit 1	**Is there an ID?**
 * unset: No ID and no space for ID
 
 bit 2-4 **serialization method:** describe what serialisation method is used. See section "Delta value array rules"	<br>
-bit 5-8 **precission:** tells how many decimals to use in coordinates see section "Storage of coordinates"
+bit 5-8 **precision:** tells how many decimals to use in coordinates see section "Storage of coordinates"
 	
 
 ###The type
