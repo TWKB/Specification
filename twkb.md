@@ -162,26 +162,25 @@ or
 * varInt **ncomponents** holding number of components used to build the polygon
 * array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
 
-## Storage of coordinates
+## Coordinates storage
 
-All storage is **integers**. So what happens is that the value gets multiplied with 10^precision-value, and is then rounded to closest integer<br>
-when reading the twkb, the value should be divided with 10^precision-value
+All storage is **integers**. So what happens is that the value gets multiplied with 10^precision-value, and is then rounded to closest integer<br>When reading the twkb, the value should be divided with 10^precision-value
 
 So if the precision value is 2, we multiply the value with 100 and rounds the result to closest integer when we create out twkb-geometry and do the reveresed operation when we read it.
 
 ## Delta value array rules
 
 This is about how the coordinates are serialized. The problem to be solved is that we want to use as little space as possible to store our coordinates.<br>
-To do that we cannot just use a fixed data type because than we have to use the biggest size possible nessecary. Instead we have to find a way to change the storage size as the need changes. <br>
+To do that we cannot just use a fixed data type because than we have to use the biggest size possible necessary. Instead we have to find a way to change the storage size as the need changes. <br>
 The delta value between two coordinates vary a lot.<br>
 
 This can be solved in a lot of ways, each one with it's pros and cons. In the first TWKB-byte, bit nr 2-4 describes which serialisation method that is used. <br>
 That gives only 8 possibilities, but that will have to do for now
 
-### method nr 1  <br>
+### Method 1 <br>
 This is the default now <br>
 Also here the first coordinate is stored as full value and the ones after that as delta values<br>
-The difference is that here all values is stored as signed varInt with of maximum 8 bytes<br><br>
+The difference is that here all values are stored as signed varInt with a maximum of 8 bytes<br><br>
 This seems to be the most promising method.
 The method is described here:
 https://developers.google.com/protocol-buffers/docs/encoding#varints
