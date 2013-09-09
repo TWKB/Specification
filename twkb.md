@@ -72,7 +72,7 @@ bit 6-8:  number of dimensions (ndims)
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **nrings** holding number of rings (first ring is boundary, the others are holes)
 
-For each ring{<br>
+For each ring {<br>
 * varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
@@ -86,7 +86,7 @@ For each ring{<br>
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **nlinestrings**  holding number of linestrings
 
-For each linestring{<br>
+For each linestring {<br>
 * varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
@@ -95,20 +95,20 @@ For each linestring{<br>
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **npolygons** holding number of polygons
 
-For each polygon{<br>
+For each polygon {<br>
 * varInt **nrings** holding number of rings (first ring is boundary, the rest is holes)
 
-For each ring{<br>
+For each ring {<br>
 * varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
-}	<br>
+  }<br>
 }	
 
 #### Type 7, GeometryCollection 
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **ngeometries** holding number of geometries
 
-For each geometry{<br>
+For each geometry {<br>
 * varInt describing type and ndim  of subgeometry<br>
 * a geometry of the specified type without ID<br>
 }
@@ -117,7 +117,7 @@ For each geometry{<br>
 
 * varInt **npoints** holding number of points
 
-For each point{<br>
+For each point {<br>
 * Point of type 1
 }
 
@@ -126,7 +126,7 @@ For each point{<br>
 
 * varInt **nlinestrings** holding number of linestrings
 
-For each linestring{<br>
+For each linestring {<br>
 * Linestring of type 2
 }
 
@@ -134,7 +134,7 @@ For each linestring{<br>
 
 * varInt **npolygons** holding number of polygons
 
-For each polygon{<br>
+For each polygon {<br>
 * Polygon of type 3
 }
 
@@ -142,7 +142,7 @@ For each polygon{<br>
 
 * varInt **collections** holding number of collections
 
-For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections){<br>
+For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections) {<br>
 * MultiPoint of type 4
 or
 * MultiLinestrings of type 5
@@ -164,10 +164,10 @@ or
 
 ## Storage of coordinates
 
-All storage is **integers**. So what happens is that the value gets multiplied with 10^precission-value, and is then rounded to closest integer<br>
-when reading the twkb, the value should be divided with 10^precission-value
+All storage is **integers**. So what happens is that the value gets multiplied with 10^precision-value, and is then rounded to closest integer<br>
+when reading the twkb, the value should be divided with 10^precision-value
 
-So if the precission value is 2, we multiply the value with 100 and rounds the result to closest integer when we create out twkb-geometry and do the reveresed operation when we read it.
+So if the precision value is 2, we multiply the value with 100 and rounds the result to closest integer when we create out twkb-geometry and do the reveresed operation when we read it.
 
 ## Delta value array rules
 
