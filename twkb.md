@@ -33,7 +33,7 @@ bit 5-8 **precision:** tells how many decimals to use in coordinates see section
 
 ###The type
 
-* UINT8 holding geometry **type** and **number of dimmensions**
+* UINT8 holding geometry **type** and **number of dimensions**
 
 this byte with type information will apear after the initial byte in every twkb-geometry, and for each geometry in a geometry collection
 
