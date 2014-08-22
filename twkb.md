@@ -1,6 +1,6 @@
 #TWKB
 
-version 0.1
+version 0.2
 
 Specification for "Tiny WKB", TWKB
 	
@@ -12,14 +12,14 @@ TWKB is meant to be a multi purpose slimmed format for transporting vector geome
 
 ###General rules
 The first point in a TWKB-geometry is represented by it's full coordinates, the rest is delta-values relative to the point before.
-How the deltavalues are serialized is described in the section "Delta value array rules" below.<br><br>
+How the deltavalues are stored as varInts<br><br>
 Datatypes used is of fixed length or VarInt. VarInt is a vay of encoding variable length Integers described here:
 https://developers.google.com/protocol-buffers/docs/encoding#varints
 
 ###The main header
 
-1 byte
-The first byte of the TWKB-geometry only apears once, no matter what type it is.
+1 byte<br>
+the first byte of the TWKB-geometry only apears once, no matter what type it is.
 
 That byte is used like this:
 
@@ -27,13 +27,32 @@ bit 1	**Is there an ID?**
 * set: The TWKB or subgeometries have ID, see the specific types
 * unset: No ID and no space for ID
 
-bit 2-4 **serialization method:** describe what serialisation method is used. See section "Delta value array rules"	<br>
+bit 2	**Is size-information included?**
+* set: Yes, directly after this byte comes a varInt holding the size of the rest of the geometry
+* unset: No size-info and no space for size-info
+
+bit 3	**Is bounding boxes included?**
+* set: Yes, after the size information is the bounding box
+* unset: No no bounding box and no space for a bounding box
+
 bit 5-8 **precision:** tells how many decimals to use in coordinates see section "Storage of coordinates"
 	
+###Optional extra information
+
+####Sizes
+1 varInt <br> 
+If the size information bit is set a varInt with size info comes next. The size given is the rest of the size after this size information.<br>
+That means that when the application has read this size information, by adding this size value to the cursor it is standing in front of the next geoemtry.<br>
+In that way it is very fast to just scan through the geometries to get the bounding boxes or to distribute geometries to different threads to be read.
+
+####2D Bounding box
+4 varInt<br> 
+If the bounding box bit in the first byte is set a 2D bounding boxe comes next.
+A bounding box is represented by it's lower left x and y value as varInt followed by delta-values to find the upper right corner as varInts.
 
 ###The type
 
-* UINT8 holding geometry **type** and **number of dimensions**
+* 1 byte holding geometry **type** and **number of dimensions**
 
 this byte with type information will apear after the initial byte in every twkb-geometry, and for each geometry in a geometry collection
 
@@ -173,18 +192,9 @@ So if the precision value is 2, we multiply the value with 100 and rounds the re
 This is about how the coordinates are serialized. The problem to be solved is that we want to use as little space as possible to store our coordinates.<br>
 To do that we cannot just use a fixed data type because than we have to use the biggest size possible necessary. Instead we have to find a way to change the storage size as the need changes. <br>
 The delta value between two coordinates vary a lot.<br>
-
-This can be solved in a lot of ways, each one with it's pros and cons. In the first TWKB-byte, bit nr 2-4 describes which serialisation method that is used. <br>
-That gives only 8 possibilities, but that will have to do for now
-
-### Method 1 <br>
-This is the default now <br>
-Also here the first coordinate is stored as full value and the ones after that as delta values<br>
-The difference is that here all values are stored as signed varInt with a maximum of 8 bytes<br><br>
-This seems to be the most promising method.
+This is solved by encoding the values as varInt
 The method is described here:
 https://developers.google.com/protocol-buffers/docs/encoding#varints
 
-Probably multiple compression methods will not be needed if there is no very good reason. 
-Then we have other plans for the three bits in the header.
+
 
