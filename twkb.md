@@ -72,7 +72,7 @@ bit 1-5 gives 31 type positions, we use a few of them:
 bit 6-8:  number of dimensions (ndims)
 
 #### Bounding box
-4 varInt<br> 
+2 varInt per dimmension<br> 
 If the bounding box bit in the first byte is set a bounding box comes next.
 A bounding box is represented with varInts like:<br>
 xMin, deltax, ymin, deltay, .......
