@@ -1,6 +1,6 @@
 #TWKB
 
-version 0.2
+version 0.21
 
 Specification for "Tiny WKB", TWKB
 	
@@ -45,11 +45,6 @@ If the size information bit is set a varInt with size info comes next. The size 
 That means that when the application has read this size information, by adding this size value to the cursor it is standing in front of the next geoemtry.<br>
 In that way it is very fast to just scan through the geometries to get the bounding boxes or to distribute geometries to different threads to be read.
 
-####2D Bounding box
-4 varInt<br> 
-If the bounding box bit in the first byte is set a 2D bounding boxe comes next.
-A bounding box is represented by it's lower left x and y value as varInt followed by delta-values to find the upper right corner as varInts.
-
 ###The type
 
 * 1 byte holding geometry **type** and **number of dimensions**
@@ -75,6 +70,11 @@ bit 1-5 gives 31 type positions, we use a few of them:
 * 26	TopoPolygon
 
 bit 6-8:  number of dimensions (ndims)
+
+####2D Bounding box
+4 varInt<br> 
+If the bounding box bit in the first byte is set a 2D bounding boxe comes next.
+A bounding box is represented by it's lower left x and y value as varInt followed by delta-values to find the upper right corner as varInts.
 
 ###Description type by type
 
