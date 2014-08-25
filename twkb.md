@@ -71,10 +71,12 @@ bit 1-5 gives 31 type positions, we use a few of them:
 
 bit 6-8:  number of dimensions (ndims)
 
-####2D Bounding box
+#### Bounding box
 4 varInt<br> 
-If the bounding box bit in the first byte is set a 2D bounding boxe comes next.
-A bounding box is represented by it's lower left x and y value as varInt followed by delta-values to find the upper right corner as varInts.
+If the bounding box bit in the first byte is set a bounding box comes next.
+A bounding box is represented with varInts like:<br>
+xMin, deltax, ymin, deltay, .......
+This way a 2d box can be read without knowing the number of dimmensions (and then juming to next geoemtry. If the geoemtries is to be read all dimmensions of the bbox must of course be read.)
 
 ###Description type by type
 
