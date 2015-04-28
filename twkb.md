@@ -1,95 +1,142 @@
-#TWKB
+# "Tiny Well-known Binary" or "TWKB"
 
-version 0.21
-
-Specification for "Tiny WKB", TWKB
+| Version | Release     |
+| ------- | ----------- |
+| 0.21    | May 1, 2015 |
 	
-##Abstract 
+## Abstract 
 
-TWKB is meant to be a multi purpose slimmed format for transporting vector geometry data.
+TWKB is a multi-purpose format for serializing vector geometry data into a byte buffer, with an emphasis on minimizing size of the buffer.
 	
-##The structure
+### Why not WKB? 
 
-###General rules
-The first point in a TWKB-geometry is represented by it's full coordinates, the rest is delta-values relative to the point before.
-How the deltavalues are stored as varInts<br><br>
-Datatypes used is of fixed length or VarInt. VarInt is a vay of encoding variable length Integers described here:
-https://developers.google.com/protocol-buffers/docs/encoding#varints
+The original OGC "well-known binary" format is a simple format, and is capable of easily representing complex OGC geometries like nested collections, but it has two important drawbacks for use as a production serialization: 
 
-###The main header
+* it is not aligned, so it doesn't support efficient direct memory access; and,
+* it uses IEEE doubles as the coordinate storage format, so for data with lots of spatially adjacent coordinates (basically, all GIS data) it wastes a lot of space on redundant specification of coordinate information.
 
-1 byte<br>
-the first byte of the TWKB-geometry only apears once, no matter what type it is.
+A new serialization format can address the problem of alignment, or the problem of size, but not both. Given that most current client/server perfomance issues are bottlenecked on network transport times, TWKB concentrates on solving the problem of serialization size.
 
-That byte is used like this:
+### Basic Principles
 
-bit 1	**Is there an ID?**
-* set: The TWKB or subgeometries have ID, see the specific types
-* unset: No ID and no space for ID
+TWKB applies the following principles:
 
-bit 2	**Is size-information included?**
-* set: Yes, directly after this byte comes a varInt holding the size of the rest of the geometry
-* unset: No size-info and no space for size-info
+* Only store the absolute position once, and store all other positions as delta values relative to the preceding position.
+* Only use as much address space as is necessary for any given value. Practically this means that "variable length integers" or "[varints](https://developers.google.com/protocol-buffers/docs/encoding#varints)" are used throughout the specification for storing values in any situation where numbers greater than 128 might be encountered.
 
-bit 3	**Is bounding boxes included?**
-* set: Yes, after the size information is the bounding box
-* unset: No no bounding box and no space for a bounding box
 
-bit 5-8 **precision:** tells how many decimals to use in coordinates see section "Storage of coordinates"
+## Structure
+
+### Primitives Types and Group Typess
+
+TWKB supports two different use cases with different structures:
+
+* Primitive types, that have exact analogues in WKB. For example, Point, LineString, MultiPoint and MultiLinestring. Each primitive geometry usually comes from a single feature in the original data, either a single row in a database, or a single record in a GIS file. Each primitive geometry has only one (optional) unique identifer that ties it back to the original data.
+
+* Group types, that allow geometries from multiple features to be serialized into a single byte buffer. Each *element* of a group generally carries a unique identifier that allows it to be tied back to a unique feature in the orignal data. Groups allow collections of features to be serialized into a single binary to ship to a remote client.
+
+### Standard Attributes
+
+Every TWKB geometry contains standard attributes at the top of the object.
+
+* A **metadata header** to indicate which optional attributes to expect, and the storage precision of all coordinates in the geometry.
+* An optional **size** in bytes of the object.
+* A **type number** and **dimensionality** byte to describe the OGC geometry type.
+* An optional **bounding box** of the geometry.
+* An optional **unique integer identifier** of the geometry.
+
+#### Metadata Header
+
+**Size:** 1 byte
+
+The first byte of TWKB is mandatory, and encodes the following information:
+
+| Bits    | Role           | Purpose                                         | 
+| ------- | -------------- | ----------------------------------------------- |
+| 1       | Boolean        | Is there an ID attribute?                       |
+| 2       | Boolean        | Is there a size attribute?                      |
+| 3       | Boolean        | Is there a bounding box?                        |
+| 5-8     | Signed Integer | What precision should coordinates be stored at? |
+
 	
-###Optional extra information
+#### Size [Optional]
 
-####Sizes
-1 varInt <br> 
-If the size information bit is set a varInt with size info comes next. The size given is the rest of the size after this size information.<br>
-That means that when the application has read this size information, by adding this size value to the cursor it is standing in front of the next geoemtry.<br>
-In that way it is very fast to just scan through the geometries to get the bounding boxes or to distribute geometries to different threads to be read.
+**Size:** 1 varInt (so, variable)
 
-###The type
+If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The values is the size in bytes of the remainder of the geometry after the size attribute.
 
-* 1 byte holding geometry **type** and **number of dimensions**
+When encountered in collections, an application can use the size attribute to advance the read pointer the the start of the next geometry. This can be used for a quick scan through a set of geometries, for reading just bounding boxes, or to distibute the read process to different threads.
 
-this byte with type information will apear after the initial byte in every twkb-geometry, and for each geometry in a geometry collection
+#### Type & Dimensions
 
-The type-byte is used like this:
+**Size:** 1 byte, holding geometry **type** and **number of dimensions**
 
-bit 1-5 gives 31 type positions, we use a few of them:
+The type-byte stores both the geometry type, and the dimensionality of the coordinates of the geometry. 
 
-* 1	Point
-* 2	Linestring
-* 3	Polygon
-* 4	MultiPoint
-* 5	MultiLinestring
-* 6	MultiPolygon
-* 7	GeometryCollection
-* 21	MultiPoint with id on each point
-* 22	MultiLinestring with id on each linestring
-* 23	MultiPolygon with id on each polygon
-* 24	GeometryCollection with id on each collection
-* 25	TopoLinestring
-* 26	TopoPolygon
+* Bits 1-5 store the geometry type (there is space for 31 and we currently use 9):
 
-bit 6-8:  number of dimensions (ndims)
+  * 1	Point
+  * 2	Linestring
+  * 3	Polygon
+  * 4	MultiPoint
+  * 5	MultiLinestring
+  * 6	MultiPolygon
+  * 7	GeometryCollection
+  * 20	Homogeneous Group
+  * 21	Heterogeneous Group
 
-#### Bounding box
+* Bits 6-7 store the number of coordinate dimensions. The coordinate dimension number is interpreted as:
+
+  * 0 X/Y
+  * 1 X/Y/Z
+  * 2 X/Y/M
+  * 3 X/Y/Z/M
+  
+The geometry type can be read by masking out the lower five bits (`type & 0x1f`).
+
+The coordinate dimension can be read by masking out bits 6-7 and shifting them down (`(type & 0x60) >> 5`).
+
+
+#### Bounding Box [Optional]
+
 2 varInt per dimmension<br> 
 If the bounding box bit in the first byte is set a bounding box comes next.
 A bounding box is represented with varInts like:<br>
 xMin, deltax, ymin, deltay, .......
 This way a 2d box can be read without knowing the number of dimmensions (and then juming to next geoemtry. If the geoemtries is to be read all dimmensions of the bbox must of course be read.)
 
-###Description type by type
 
-#### Type 1, **Point**
+### Description of Types
+
+#### Type 1, Point
+
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
 	
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    coordinates       varint[]
+  
+  
 #### Type 2, Linestring
+
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below
 
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    npoints           varint
+    coordinates       varint[]
+
 #### Type 3, Polygon
+
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **nrings** holding number of rings (first ring is boundary, the others are holes)
 
@@ -98,10 +145,32 @@ For each ring {<br>
 * a Point Array see section "Delta value array rules" below<br>
 }	
 
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    nrings            varint
+    npoints[0]        varint
+    coordinates[0]    varint[]
+    ...
+    npoints[n]        varint
+    coordinates[n]    varint[]
+
+
 #### Type 4, MultiPoint (with one id for all)
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **npoints** holding number of points
 * a Point Array see section "Delta value array rules" below
+
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    npoints           varint
+    coordinates       varint[]
+
 
 #### Type 5, MultiLineString (with one id for all)
 * varInt **ID**, optional, only used if very first bit of TWKB is set
@@ -111,6 +180,19 @@ For each linestring {<br>
 * varInt **npoints** holding number of vertex-points
 * a Point Array see section "Delta value array rules" below<br>
 }	
+
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    nlinestrings      varint
+    npoints[0]        varint
+    coordinates[0]    varint[]
+    ...
+    npoints[n]        varint
+    coordinates[n]    varint[]
+
 
 #### Type 6, MultiPolygon (with one id for all)
 * varInt **ID**, optional, only used if very first bit of TWKB is set
@@ -125,6 +207,21 @@ For each ring {<br>
   }<br>
 }	
 
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    npolygons         varint
+    nrings[0]         varint
+    npoints[0][0]     varint
+    coordinates[0][0] varint[]
+    ...
+    nrings[n]         varint
+    npoints[n][m]     varint
+    coordinates[n][m] varint[]
+
+
 #### Type 7, GeometryCollection 
 * varInt **ID**, optional, only used if very first bit of TWKB is set
 * varInt **ngeometries** holding number of geometries
@@ -134,7 +231,16 @@ For each geometry {<br>
 * a geometry of the specified type without ID<br>
 }
 
-#### Type 21, MultiPoint (with individual id)
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    [id]              varint
+    ngeometries       varint
+    geom              twkb[]
+
+
+#### Type 20, Homogeneous Group
 
 * varInt **npoints** holding number of points
 
@@ -143,47 +249,12 @@ For each point {<br>
 }
 
 
-#### Type 22, MultiLineString (with individual id)
+#### Type 21, Heterogeneous Group
 
-* varInt **nlinestrings** holding number of linestrings
 
-For each linestring {<br>
-* Linestring of type 2
-}
 
-#### Type 23, MultiPolygon (with individual id)
 
-* varInt **npolygons** holding number of polygons
-
-For each polygon {<br>
-* Polygon of type 3
-}
-
-#### Type 24, MultiGometryCollection (with individual id)
-
-* varInt **collections** holding number of collections
-
-For each collection [MultiPoints, MultiLinestrings, MultiPolygons or GeometryCollections) {<br>
-* MultiPoint of type 4
-or
-* MultiLinestrings of type 5
-or 
-* MultiPolygon of type 6
-or
-* GeometryCollection of type 7
-}
-
-#### Type 25	topo linestring
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **ncomponents** holding number of components used to build the linestring
-* array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
-
-#### Type 26	topo polygon
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **ncomponents** holding number of components used to build the polygon
-* array of id-values to linestrings or points (type 1,2 or members of type 7, 21 or 22) (those linestrings or points can be a part of this twkb-geom or another, it is up to the client to index the points and linestrings for fast find)
-
-## Coordinates storage
+## Coordinate Storage
 
 All storage is **integers**. So what happens is that the value gets multiplied with 10^precision-value, and is then rounded to closest integer<br>When reading the twkb, the value should be divided with 10^precision-value
 
