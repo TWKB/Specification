@@ -143,7 +143,7 @@ The result is a very compact representation of the coordinates.
 
 All storage using varints, which are **integers**. However, before being encoded most coordinate are doubles. How are the double coordinates converted into integers? And how are the integers converted ino the final array of varints?
 
-Each coordinate is multiplied by the **geometry precision** value (from the metadata header), and then rounded to the nearest integer value (`round(doubecoord/precision)`). When converting from TWKB back to double precision, the reverse process is applied.
+Each coordinate is multiplied by the **geometry precision** value (from the metadata header), and then rounded to the nearest integer value (`round(doubecoord/10^precision)`). When converting from TWKB back to double precision, the reverse process is applied.
 
 #### Calculate Delta Values
 
