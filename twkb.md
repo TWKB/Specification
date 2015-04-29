@@ -99,33 +99,107 @@ The coordinate dimension can be read by masking out bits 6-7 and shifting them d
 
 #### Bounding Box [Optional]
 
-2 varInt per dimmension<br> 
-If the bounding box bit in the first byte is set a bounding box comes next.
-A bounding box is represented with varInts like:<br>
-xMin, deltax, ymin, deltay, .......
-This way a 2d box can be read without knowing the number of dimmensions (and then juming to next geoemtry. If the geoemtries is to be read all dimmensions of the bbox must of course be read.)
+**Size:** 2 varints per dimension
+
+Each dimension of a bounding box is represented by a pair of varints: 
+
+* the minimum of the dimension
+* the relative maximum of the dimension (relative to the minimum)
+
+So, for example:
+
+* [xmin, deltax, ymin, deltay, zmin, deltaz]
 
 
-### Description of Types
+## Description of Types
 
-#### Type 1, Point
+### PointArrays
 
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* the point coordinates (as deltavalue if in a MultiPoint or Geometry Collection)
-	
+Every object contains a point array, which is an array of coordinates, stored as varints. The final values in the point arrays are a result of four steps:
+
+* convert doubles to integers
+* calculate integer delta values between successive points
+* zig-zag encode delta values to move negative values into positive range
+* varint encode the final value
+
+The result is a very compact representation of the coordinates. 
+
+#### Convert to Integers
+
+All storage using varints, which are **integers**. However, before being encoded most coordinate are doubles. How are the double coordinates converted into integers? And how are the integers converted ino the final array of varints?
+
+Each coordinate is multiplied by the **geometry precision** value (from the metadata header), and then rounded to the nearest integer value (`round(doubecoord/precision)`). When converting from TWKB back to double precision, the reverse process is applied.
+
+#### Calculate Delta Values
+
+Rather than storing the absolute position of every vertex, we store the **difference** between each coordinate and the previous coordinate of that dimension. So the coordinate values of a point array are:
+
+          x1,        y1
+    (x2 - x1), (y2 - y1)
+    (x3 - x2), (y3 - y2)
+    (x4 - x3), (y4 - y2)
+    ...
+    (xn - xn-1), (yn - yn-1)
+
+Delta values of integer coordinates are nice and small, and they store very compactly as varints.
+
+
+#### ZigZag Encode
+
+The varint scheme for indicating a value larger than one byte involves setting the "high bit", which is the same thing that standard integers use for storing negative numbers. 
+
+So negative numbers need to first be encoded using a "[zig zag](https://developers.google.com/protocol-buffers/docs/encoding)" encoding, which keep absolute values small, but do not set the high bit as part of encoding negative numbers.
+
+The effect is to convert small negative numbers into small positive numbers, which is exactly what we want, since delta values will tend to be small negative and positive numbers:
+
+    -1 => 1
+     1 => 2
+    -2 => 3
+     2 => 4
+
+A computationally fast formula to generate the zig-zag value is 
+
+    /* for 32-bit signed integer n */
+    unsigned int zz = (n << 1) ^ (n >> 31)
+    
+    /* for 64-bit signed integer n */
+    unsigned long zz = (n << 1) ^ (n >> 63)
+
+
+#### VarInt Encode
+
+Variable length integers are a clever way of only using as many bytes as necessary to store a value. The method is described here:
+
+https://developers.google.com/protocol-buffers/docs/encoding#varints
+
+The varint scheme sets the high bit of a byte as a flag to indicate when more bytes are needed to fully represent a number. Decoding a varint accumulates the information in each flagged byte until an unflagged byte is found and the integer is complete and ready to return.
+
+
+### Primitive Types
+
+#### Point [Type 1]
+
+Because **points** only have one coordinate, the coordinates will be the true values (not relative) except in cases where the point is embedded in a collection.
+
+Bounding boxes are permitted on points, but **discouraged** since they just duplicate the values already available in the point coordinate. Similarly, unless the point is part of a collection (where random access is a possible use case), the size should also be omitted.
+
     metadata_header   byte
     [size]            varint
     type_and_dims     byte
     [bounds]          bbox
     [id]              varint
-    coordinates       varint[]
+    pointarray        varint[]
   
   
-#### Type 2, Linestring
+#### Linestring [Type 2]
 
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **npoints** holding number of vertex-points
-* a Point Array see section "Delta value array rules" below
+A **linestring** has, in addition to the standard metadata:
+
+* an optional "id" (if indicated in the metadata header)
+* an **npoints** varint giving the number of points in the linestring
+* if **npoints** is zero, the linestring is "empty", and there is no further content
+
+The layout is:
 
     metadata_header   byte
     [size]            varint
@@ -133,17 +207,23 @@ This way a 2d box can be read without knowing the number of dimmensions (and the
     [bounds]          bbox
     [id]              varint
     npoints           varint
-    coordinates       varint[]
+    pointarray        varint[]
 
-#### Type 3, Polygon
 
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **nrings** holding number of rings (first ring is boundary, the others are holes)
+#### Polygon [Type 3]
 
-For each ring {<br>
-* varInt **npoints** holding number of vertex-points
-* a Point Array see section "Delta value array rules" below<br>
-}	
+A **polygon** has, in addition to the standard metadata:
+
+* an optional "id" (if indicated in the metadata header)
+* an **nrings** varint giving the number of rings in the polygon
+* if **nrings** is zero, the polygon is "empty", and there is no further content
+* for each ring there will be
+
+    * an **npoints** varint giving the number of points in the ring
+    * a pointarray of varints
+    * rings are assumed to be implicitly closed, so the first and last point should not be the same
+
+The layout is:
 
     metadata_header   byte
     [size]            varint
@@ -152,16 +232,21 @@ For each ring {<br>
     [id]              varint
     nrings            varint
     npoints[0]        varint
-    coordinates[0]    varint[]
+    pointarray[0]     varint[]
     ...
     npoints[n]        varint
-    coordinates[n]    varint[]
+    pointarray[n]     varint[]
 
 
-#### Type 4, MultiPoint (with one id for all)
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **npoints** holding number of points
-* a Point Array see section "Delta value array rules" below
+#### MultiPoint [Type 4]
+
+A **multipoint** has, in addition to the standard metadata:
+
+* an optional "id" (if indicated in the metadata header)
+* an **npoints** varint giving the number of points in the multipoint
+* if **npoints** is zero, the multipoint is "empty", and there is no further content
+
+The layout is:
 
     metadata_header   byte
     [size]            varint
@@ -169,17 +254,22 @@ For each ring {<br>
     [bounds]          bbox
     [id]              varint
     npoints           varint
-    coordinates       varint[]
+    pointarray        varint[]
 
 
-#### Type 5, MultiLineString (with one id for all)
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **nlinestrings**  holding number of linestrings
+#### MultiLineString [Type 5]
 
-For each linestring {<br>
-* varInt **npoints** holding number of vertex-points
-* a Point Array see section "Delta value array rules" below<br>
-}	
+A **multilinestring** has, in addition to the standard metadata:
+
+* an optional "id" (if indicated in the metadata header)
+* an **nlinestrings** varint giving the number of linestrings in the collection
+* if **nlinestrings** is zero, the collection is "empty", and there is no further content
+* for each linestring there will be
+
+    * an **npoints** varint giving the number of points in the linestring
+    * a pointarray of varints
+
+The layout is:
 
     metadata_header   byte
     [size]            varint
@@ -188,24 +278,29 @@ For each linestring {<br>
     [id]              varint
     nlinestrings      varint
     npoints[0]        varint
-    coordinates[0]    varint[]
+    pointarray[0]     varint[]
     ...
     npoints[n]        varint
-    coordinates[n]    varint[]
+    pointarray[n]     varint[]
 
 
-#### Type 6, MultiPolygon (with one id for all)
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **npolygons** holding number of polygons
+#### MultiPolygon [Type 6]
 
-For each polygon {<br>
-* varInt **nrings** holding number of rings (first ring is boundary, the rest is holes)
+A **multipolygon** has, in addition to the standard metadata:
 
-For each ring {<br>
-* varInt **npoints** holding number of vertex-points
-* a Point Array see section "Delta value array rules" below<br>
-  }<br>
-}	
+* an optional "id" (if indicated in the metadata header)
+* an **npolygons** varint giving the number of polygons in the collection
+* if **npolygons** is zero, the collection is "empty", and there is no further content
+* for each polygon there will be
+
+    * an **nrings** varint giving the number of rings in the linestring
+    * for each ring there will be
+
+        * an **npoints** varint giving the number of points in the ring
+        * a pointarray of varints
+        * rings are assumed to be implicitly closed, so the first and last point should not be the same
+
+The layout is:
 
     metadata_header   byte
     [size]            varint
@@ -215,21 +310,22 @@ For each ring {<br>
     npolygons         varint
     nrings[0]         varint
     npoints[0][0]     varint
-    coordinates[0][0] varint[]
+    pointarray[0][0]  varint[]
     ...
     nrings[n]         varint
     npoints[n][m]     varint
-    coordinates[n][m] varint[]
+    pointarray[n][m]  varint[]
 
 
-#### Type 7, GeometryCollection 
-* varInt **ID**, optional, only used if very first bit of TWKB is set
-* varInt **ngeometries** holding number of geometries
+#### GeometryCollection [Type 7]
 
-For each geometry {<br>
-* varInt describing type and ndim  of subgeometry<br>
-* a geometry of the specified type without ID<br>
-}
+A **geometrycollection** has, in addition to the standard metadata:
+
+* an optional "id" (if indicated in the metadata header)
+* an **ngeometries** varint giving the number of geometries in the collection
+* for each geometry there will be a complete TWKB geometry, readable using the rules set out above
+
+The layout is:
 
     metadata_header   byte
     [size]            varint
@@ -239,35 +335,37 @@ For each geometry {<br>
     ngeometries       varint
     geom              twkb[]
 
+### Group Types
 
-#### Type 20, Homogeneous Group
+#### Homogeneous Group [Type 20]
 
-* varInt **npoints** holding number of points
+The layout is:
 
-For each point {<br>
-* Point of type 1
-}
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    subtype           varint
+    [bounds]          bbox
+    ngeometries       varint
+    stripped_geom     twkb[]
+
+A "stripped" geometry is a primitive geometry with everything prior to the "id" field removed. Stripped geometries in groups always have an "id" field, it is not optional.
 
 
-#### Type 21, Heterogeneous Group
+#### Heterogeneous Group [Type 21]
+
+The layout is:
+
+    metadata_header   byte
+    [size]            varint
+    type_and_dims     byte
+    [bounds]          bbox
+    ngeometries       varint
+    reduced_geom     twkb[]
+
+A "reduced" geometry is a primitive geometry with everything prior to the "id" field removed except the type field. Reduced geometries in groups always have an "id" field, it is not optional.
 
 
-
-
-## Coordinate Storage
-
-All storage is **integers**. So what happens is that the value gets multiplied with 10^precision-value, and is then rounded to closest integer<br>When reading the twkb, the value should be divided with 10^precision-value
-
-So if the precision value is 2, we multiply the value with 100 and rounds the result to closest integer when we create out twkb-geometry and do the reveresed operation when we read it.
-
-## Delta value array rules
-
-This is about how the coordinates are serialized. The problem to be solved is that we want to use as little space as possible to store our coordinates.<br>
-To do that we cannot just use a fixed data type because than we have to use the biggest size possible necessary. Instead we have to find a way to change the storage size as the need changes. <br>
-The delta value between two coordinates vary a lot.<br>
-This is solved by encoding the values as varInt
-The method is described here:
-https://developers.google.com/protocol-buffers/docs/encoding#varints
 
 
 
