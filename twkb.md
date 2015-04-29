@@ -109,8 +109,8 @@ The "precision" refers to the number of base-10 decimal places stored.
     * 41231.1231 at precision=-2 would store 41200  
 
 In order to support negative precisions, the precision number should be stored using zig-zag encoding (see "ZigZag Encode" below).
-
-
+	
+    
 #### Extended Precision [Optional]
 
 For some coordinate reference systems, and dimension combinations, it makes no sense to store all dimensions using the same precision. For example, for data with X/Y/Z/T dimensions, using a geographic coordinate system, it might make sense to store the X/Y dimensions with precision of 5 (about 
@@ -156,7 +156,7 @@ The result is a very compact representation of the coordinates.
 
 All storage using varints, which are **integers**. However, before being encoded most coordinate are doubles. How are the double coordinates converted into integers? And how are the integers converted ino the final array of varints?
 
-Each coordinate is multiplied by the **geometry precision** value (from the metadata header), and then rounded to the nearest integer value (`round(doubecoord/precision)`). When converting from TWKB back to double precision, the reverse process is applied.
+Each coordinate is multiplied by the **geometry precision** value (from the metadata header), and then rounded to the nearest integer value (`round(doubecoord/10^precision)`). When converting from TWKB back to double precision, the reverse process is applied.
 
 #### Calculate Delta Values
 
