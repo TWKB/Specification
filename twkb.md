@@ -58,7 +58,22 @@ The first byte of TWKB is mandatory, and encodes the following information:
 | 3       | Boolean        | Is there a bounding box?                        |
 | 5-8     | Signed Integer | What precision should coordinates be stored at? |
 
+The "precision" refers to the number of base-10 decimal places stored. 
+
+* A **positive** precision implies retaining information to the right of the decimal place
+
+    * 41231.1231 at precision=2 would store 41231.12  
+    * 41231.1231 at precision=1 would store 41231.1  
+    * 41231.1231 at precision=0 would store 41231
+
+* A **negative** precision implies rouding up to the left of the decimal place
+
+    * 41231.1231 at precision=-1 would store 41230  
+    * 41231.1231 at precision=-2 would store 41200  
+
+In order to support negative precisions, the precision number should be stored using zig-zag encoding (see "ZigZag Encode" below).
 	
+    
 #### Size [Optional]
 
 **Size:** 1 varInt (so, variable)
