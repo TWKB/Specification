@@ -2,7 +2,7 @@
 
 | Version | Release     |
 | ------- | ----------- |
-| 0.21    | May 1, 2015 |
+| 0.23    | May 1, 2015 |
 	
 ## Abstract 
 
@@ -45,27 +45,6 @@ Every TWKB geometry contains standard attributes at the top of the object.
 * An optional **bounding box** of the geometry.
 * An optional **unique integer identifier** of the geometry.
 
-#### Metadata Header
-
-**Size:** 1 byte
-
-The first byte of TWKB is mandatory, and encodes the following information:
-
-| Bits    | Role           | Purpose                                         | 
-| ------- | -------------- | ----------------------------------------------- |
-| 1       | Boolean        | Is there an ID attribute?                       |
-| 2       | Boolean        | Is there a size attribute?                      |
-| 3       | Boolean        | Is there a bounding box?                        |
-| 5-8     | Signed Integer | What precision should coordinates be stored at? |
-
-	
-#### Size [Optional]
-
-**Size:** 1 varInt (so, variable)
-
-If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The values is the size in bytes of the remainder of the geometry after the size attribute.
-
-When encountered in collections, an application can use the size attribute to advance the read pointer the the start of the next geometry. This can be used for a quick scan through a set of geometries, for reading just bounding boxes, or to distibute the read process to different threads.
 
 #### Type & Dimensions
 
@@ -75,26 +54,75 @@ The type-byte stores both the geometry type, and the dimensionality of the coord
 
 * Bits 1-5 store the geometry type (there is space for 31 and we currently use 9):
 
-  * 1	Point
-  * 2	Linestring
-  * 3	Polygon
-  * 4	MultiPoint
-  * 5	MultiLinestring
-  * 6	MultiPolygon
-  * 7	GeometryCollection
-  * 20	Homogeneous Group
-  * 21	Heterogeneous Group
+    * 1 Point
+    * 2 Linestring
+    * 3 Polygon
+    * 4 MultiPoint
+    * 5 MultiLinestring
+    * 6 MultiPolygon
+    * 7 GeometryCollection
+    * 20 Homogeneous Group
+    * 21 Heterogeneous Group
 
-* Bits 6-7 store the number of coordinate dimensions. The coordinate dimension number is interpreted as:
+* Bits 6-7 store the coordinate dimension number, which is interpreted as:
 
-  * 0 X/Y
-  * 1 X/Y/Z
-  * 2 X/Y/M
-  * 3 X/Y/Z/M
+    | 0 | X/Y     |
+    | 1 | X/Y/Z   |
+    | 2 | X/Y/M   |
+    | 3 | X/Y/Z/M |
+
+* Bit 8 stores the "empty" flag. If the bit is set, then the geometry is "empty" and there is no more content to follow.
+
   
 The geometry type can be read by masking out the lower five bits (`type & 0x1f`).
 
 The coordinate dimension can be read by masking out bits 6-7 and shifting them down (`(type & 0x60) >> 5`).
+
+The empty flat can be read by masking out bit 8 (`(type & 0x6=80) >> 7`).
+
+
+#### Metadata Header
+
+**Size:** 1 byte
+
+The metadata byte of TWKB is mandatory, and encodes the following information:
+
+| Bits    | Role           | Purpose                                         | 
+| ------- | -------------- | ----------------------------------------------- |
+| 1       | Boolean        | Is there a bounding box?                        |
+| 2       | Boolean        | Is there a size attribute?                      |
+| 3       | Boolean        | Is there an ID list?                            |
+| 4       | Boolean        | Is there extended precision information?        |
+| 5-8     | Signed Integer | Default precision for coordinates.              |
+
+The "precision" refers to the number of base-10 decimal places stored. 
+
+* A **positive** precision implies retaining information to the right of the decimal place
+
+    * 41231.1231 at precision=2 would store 41231.12  
+    * 41231.1231 at precision=1 would store 41231.1  
+    * 41231.1231 at precision=0 would store 41231
+
+* A **negative** precision implies rouding up to the left of the decimal place
+
+    * 41231.1231 at precision=-1 would store 41230  
+    * 41231.1231 at precision=-2 would store 41200  
+
+In order to support negative precisions, the precision number should be stored using zig-zag encoding (see "ZigZag Encode" below).
+
+
+#### Extended Precision [Optional]
+
+For some coordinate reference systems, and dimension combinations, it makes no sense to store all dimensions using the same precision. For example, for data with X/Y/Z/T dimensions, using a geographic coordinate system, it might make sense to store the X/Y dimensions with precision of 5 (about 
+
+	
+#### Size [Optional]
+
+**Size:** 1 varInt (so, variable)
+
+If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The values is the size in bytes of the remainder of the geometry after the size attribute.
+
+When encountered in collections, an application can use the size attribute to advance the read pointer the the start of the next geometry. This can be used for a quick scan through a set of geometries, for reading just bounding boxes, or to distibute the read process to different threads.
 
 
 #### Bounding Box [Optional]
