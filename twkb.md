@@ -27,14 +27,6 @@ TWKB applies the following principles:
 
 ## Structure
 
-### Primitives Types and Group Typess
-
-TWKB supports two different use cases with different structures:
-
-* Primitive types, that have exact analogues in WKB. For example, Point, LineString, MultiPoint and MultiLinestring. Each primitive geometry usually comes from a single feature in the original data, either a single row in a database, or a single record in a GIS file. Each primitive geometry has only one (optional) unique identifer that ties it back to the original data.
-
-* Group types, that allow geometries from multiple features to be serialized into a single byte buffer. Each *element* of a group generally carries a unique identifier that allows it to be tied back to a unique feature in the orignal data. Groups allow collections of features to be serialized into a single binary to ship to a remote client.
-
 ### Standard Attributes
 
 Every TWKB geometry contains standard attributes at the top of the object.
@@ -113,12 +105,27 @@ In order to support negative precisions, the precision number should be stored u
     
 #### Extended Precision [Optional]
 
-For some coordinate reference systems, and dimension combinations, it makes no sense to store all dimensions using the same precision. For example, for data with X/Y/Z/T dimensions, using a geographic coordinate system, it might make sense to store the X/Y dimensions with precision of 5 (about 
+**Size:** 1 byte
+
+For some coordinate reference systems, and dimension combinations, it makes no sense to store all dimensions using the same precision. 
+
+For example, for data with X/Y/Z/T dimensions, using a geographic coordinate system, it might make sense to store the X/Y (longitude/latitude) dimensions with precision of 6 (about 10 cm), the Z with a precision of 1 (also 10 cm), and the T with a precision of 0 (whole seconds). A single precision number cannot handle this case, so the extended precision slot is optionally available for it.
+
+The extended precision byte holds:
+
+| Bits    | Role           | Purpose                                         | 
+| ------- | -------------- | ----------------------------------------------- |
+| 1-3     | Integer        | Precision for Z coordinates.                    |
+| 4-6     | Integer        | Precision for M coordinates.                    |
+| 7-8     | Undefined      |                                                 |
+
+The extended precision values are always positive (only deal with digits to the left of the decimal point)
+
 
 	
 #### Size [Optional]
 
-**Size:** 1 varInt (so, variable)
+**Size:** 1 varint (so, variable size)
 
 If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The values is the size in bytes of the remainder of the geometry after the size attribute.
 
@@ -127,7 +134,7 @@ When encountered in collections, an application can use the size attribute to ad
 
 #### Bounding Box [Optional]
 
-**Size:** 2 varints per dimension
+**Size:** 2 varints per dimension (also variable size)
 
 Each dimension of a bounding box is represented by a pair of varints: 
 
@@ -137,6 +144,18 @@ Each dimension of a bounding box is represented by a pair of varints:
 So, for example:
 
 * [xmin, deltax, ymin, deltay, zmin, deltaz]
+
+
+#### ID List [Optional]
+
+**Size:** N varints, one per sub-geometry
+
+The TWKB collection types (multipoint, multilinestring, multipolygon, geometrycollection)  
+
+* can be used as single values (a given row contains a single collection object), or 
+* can be used as aggregate wrappers for values from multiple rows (a single object contains geometries read from multiple rows).
+
+In the latter case, it makes sense to include a unique identifier for each sub-geometry that is being wrapped into the collection. The "idlist" attribute is an array of varint that has one varint for each sub-geometry in the collection.
 
 
 ## Description of Types
@@ -171,6 +190,13 @@ Rather than storing the absolute position of every vertex, we store the **differ
 
 Delta values of integer coordinates are nice and small, and they store very compactly as varints.
 
+Every coordinate value in a geometry **except the very first one** is a delta value relative to the previous value processed. Examples:
+
+* The second coordinate of a line string should be a delta relative to the first.
+* The first coordinate of the second ring of a polygon should be a delta relative to the last coordinate of the first ring. 
+* The first coordinate of the third linestring in a multilinestring should be a delta relative to the last coordinate of the second linestring.
+
+Basically, implementors should always keep the value of the previous coordinate in hand while processing a geometry to use to difference against the incoming coordinate. By setting the very first "previous coordinate" value to [0,0] it is possible to use the same differencing code throughout, since the first value processed will thus receive a "delta" value of itself.
 
 #### ZigZag Encode
 
@@ -211,11 +237,10 @@ Because **points** only have one coordinate, the coordinates will be the true va
 
 Bounding boxes are permitted on points, but **discouraged** since they just duplicate the values already available in the point coordinate. Similarly, unless the point is part of a collection (where random access is a possible use case), the size should also be omitted.
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     pointarray        varint[]
   
   
@@ -223,17 +248,15 @@ Bounding boxes are permitted on points, but **discouraged** since they just dupl
 
 A **linestring** has, in addition to the standard metadata:
 
-* an optional "id" (if indicated in the metadata header)
 * an **npoints** varint giving the number of points in the linestring
 * if **npoints** is zero, the linestring is "empty", and there is no further content
 
 The layout is:
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     npoints           varint
     pointarray        varint[]
 
@@ -242,7 +265,6 @@ The layout is:
 
 A **polygon** has, in addition to the standard metadata:
 
-* an optional "id" (if indicated in the metadata header)
 * an **nrings** varint giving the number of rings in the polygon
 * if **nrings** is zero, the polygon is "empty", and there is no further content
 * for each ring there will be
@@ -253,11 +275,10 @@ A **polygon** has, in addition to the standard metadata:
 
 The layout is:
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     nrings            varint
     npoints[0]        varint
     pointarray[0]     varint[]
@@ -270,18 +291,18 @@ The layout is:
 
 A **multipoint** has, in addition to the standard metadata:
 
-* an optional "id" (if indicated in the metadata header)
+* an optional "idlist" (if indicated in the metadata header)
 * an **npoints** varint giving the number of points in the multipoint
 * if **npoints** is zero, the multipoint is "empty", and there is no further content
 
 The layout is:
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     npoints           varint
+    [idlist]          varint[]
     pointarray        varint[]
 
 
@@ -289,7 +310,7 @@ The layout is:
 
 A **multilinestring** has, in addition to the standard metadata:
 
-* an optional "id" (if indicated in the metadata header)
+* an optional "idlist" (if indicated in the metadata header)
 * an **nlinestrings** varint giving the number of linestrings in the collection
 * if **nlinestrings** is zero, the collection is "empty", and there is no further content
 * for each linestring there will be
@@ -299,12 +320,12 @@ A **multilinestring** has, in addition to the standard metadata:
 
 The layout is:
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     nlinestrings      varint
+    [idlist]          varint[]
     npoints[0]        varint
     pointarray[0]     varint[]
     ...
@@ -316,7 +337,7 @@ The layout is:
 
 A **multipolygon** has, in addition to the standard metadata:
 
-* an optional "id" (if indicated in the metadata header)
+* an optional "idlist" (if indicated in the metadata header)
 * an **npolygons** varint giving the number of polygons in the collection
 * if **npolygons** is zero, the collection is "empty", and there is no further content
 * for each polygon there will be
@@ -330,12 +351,12 @@ A **multipolygon** has, in addition to the standard metadata:
 
 The layout is:
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     npolygons         varint
+    [idlist]          varint[]
     nrings[0]         varint
     npoints[0][0]     varint
     pointarray[0][0]  varint[]
@@ -349,49 +370,21 @@ The layout is:
 
 A **geometrycollection** has, in addition to the standard metadata:
 
-* an optional "id" (if indicated in the metadata header)
+* an optional "idlist" (if indicated in the metadata header)
 * an **ngeometries** varint giving the number of geometries in the collection
 * for each geometry there will be a complete TWKB geometry, readable using the rules set out above
 
 The layout is:
 
+    type_and_dims     byte
     metadata_header   byte
     [size]            varint
-    type_and_dims     byte
     [bounds]          bbox
-    [id]              varint
     ngeometries       varint
+    [idlist]          varint[]
     geom              twkb[]
 
-### Group Types
 
-#### Homogeneous Group [Type 20]
-
-The layout is:
-
-    metadata_header   byte
-    [size]            varint
-    type_and_dims     byte
-    subtype           varint
-    [bounds]          bbox
-    ngeometries       varint
-    stripped_geom     twkb[]
-
-A "stripped" geometry is a primitive geometry with everything prior to the "id" field removed. Stripped geometries in groups always have an "id" field, it is not optional.
-
-
-#### Heterogeneous Group [Type 21]
-
-The layout is:
-
-    metadata_header   byte
-    [size]            varint
-    type_and_dims     byte
-    [bounds]          bbox
-    ngeometries       varint
-    reduced_geom     twkb[]
-
-A "reduced" geometry is a primitive geometry with everything prior to the "id" field removed except the type field. Reduced geometries in groups always have an "id" field, it is not optional.
 
 
 
