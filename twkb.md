@@ -58,10 +58,12 @@ The type-byte stores both the geometry type, and the dimensionality of the coord
 
 * Bits 6-7 store the coordinate dimension number, which is interpreted as:
 
-    | 0 | X/Y     |
-    | 1 | X/Y/Z   |
-    | 2 | X/Y/M   |
-    | 3 | X/Y/Z/M |
+    | Value | Interpretation |
+    | ----- | -------------- |
+    | 0     | X/Y            |
+    | 1     | X/Y/Z          |
+    | 2     | X/Y/M          |
+    | 3     | X/Y/Z/M        |
 
 * Bit 8 stores the "empty" flag. If the bit is set, then the geometry is "empty" and there is no more content to follow.
 
