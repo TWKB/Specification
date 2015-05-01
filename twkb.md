@@ -270,7 +270,6 @@ A **polygon** has, in addition to the standard metadata:
 * an **nrings** varint giving the number of rings in the polygon
 * if **nrings** is zero, the polygon is "empty", and there is no further content
 * for each ring there will be
-
     * an **npoints** varint giving the number of points in the ring
     * a pointarray of varints
     * rings are assumed to be implicitly closed, so the first and last point should not be the same
@@ -316,7 +315,6 @@ A **multilinestring** has, in addition to the standard metadata:
 * an **nlinestrings** varint giving the number of linestrings in the collection
 * if **nlinestrings** is zero, the collection is "empty", and there is no further content
 * for each linestring there will be
-
     * an **npoints** varint giving the number of points in the linestring
     * a pointarray of varints
 
@@ -343,10 +341,8 @@ A **multipolygon** has, in addition to the standard metadata:
 * an **npolygons** varint giving the number of polygons in the collection
 * if **npolygons** is zero, the collection is "empty", and there is no further content
 * for each polygon there will be
-
     * an **nrings** varint giving the number of rings in the linestring
     * for each ring there will be
-
         * an **npoints** varint giving the number of points in the ring
         * a pointarray of varints
         * rings are assumed to be implicitly closed, so the first and last point should not be the same
