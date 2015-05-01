@@ -241,6 +241,7 @@ Bounding boxes are permitted on points, but **discouraged** since they just dupl
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     pointarray        varint[]
@@ -257,6 +258,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     npoints           varint
@@ -278,6 +280,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     nrings            varint
@@ -300,6 +303,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     npoints           varint
@@ -322,6 +326,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     nlinestrings      varint
@@ -351,6 +356,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     npolygons         varint
@@ -376,6 +382,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
+    [precision_zm]    byte
     [size]            varint
     [bounds]          bbox
     ngeometries       varint
