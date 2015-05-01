@@ -32,10 +32,11 @@ TWKB applies the following principles:
 Every TWKB geometry contains standard attributes at the top of the object.
 
 * A **metadata header** to indicate which optional attributes to expect, and the storage precision of all coordinates in the geometry.
+* A **type number** and **precision** byte to describe the OGC geometry type.
+* An optional **extended dimension** byte with information about existence and presence of Z & M dimensions.
 * An optional **size** in bytes of the object.
-* A **type number** and **dimensionality** byte to describe the OGC geometry type.
 * An optional **bounding box** of the geometry.
-* An optional **unique integer identifier** of the geometry.
+* An optional **unique integer array** of sub-components for multi-geometries.
 
 
 #### Type & Precision
@@ -96,7 +97,7 @@ The metadata byte of TWKB is mandatory, and encodes the following information:
 
 
     
-#### Extended Precision [Optional]
+#### Extended Dimensions [Optional]
 
 **Size:** 1 byte
 
@@ -108,8 +109,8 @@ The extended precision byte holds:
 
 | Bits    | Role           | Purpose                                         | 
 | ------- | -------------- | ----------------------------------------------- |
-| 1       | Boolean        | Has Z coordinates?                              |
-| 2       | Boolean        | Has M coordinates?                              |
+| 1       | Boolean        | Geometry has Z coordinates?                     |
+| 2       | Boolean        | Geometry has M coordinates?                     |
 | 3-5     | Integer        | Precision for Z coordinates.                    |
 | 6-8     | Integer        | Precision for M coordinates.                    |
 
@@ -237,7 +238,7 @@ Bounding boxes are permitted on points, but **discouraged** since they just dupl
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     pointarray        varint[]
@@ -254,7 +255,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     npoints           varint
@@ -276,7 +277,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     nrings            varint
@@ -299,7 +300,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     npoints           varint
@@ -322,7 +323,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     nlinestrings      varint
@@ -352,7 +353,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     npolygons         varint
@@ -378,7 +379,7 @@ The layout is:
 
     type_and_dims     byte
     metadata_header   byte
-    [precision_zm]    byte
+    [extended_dims]   byte
     [size]            varint
     [bounds]          bbox
     ngeometries       varint
