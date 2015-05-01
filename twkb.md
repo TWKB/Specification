@@ -38,13 +38,18 @@ Every TWKB geometry contains standard attributes at the top of the object.
 * An optional **unique integer identifier** of the geometry.
 
 
-#### Type & Dimensions
+#### Type & Precision
 
 **Size:** 1 byte, holding geometry **type** and **number of dimensions**
 
 The type-byte stores both the geometry type, and the dimensionality of the coordinates of the geometry. 
 
-* Bits 1-5 store the geometry type (there is space for 31 and we currently use 9):
+| Bits    | Role             | Purpose                                         | 
+| ------- | ---------------- | ----------------------------------------------- |
+| 1-4     | Unsigned Integer | Geometry type                                   |
+| 5-8     | Signed Integer   | Geometry precision                              |
+
+* Bits 1-4 store the geometry type (there is space for 16 and we currently use 7):
 
     * 1 Point
     * 2 Linestring
@@ -53,27 +58,26 @@ The type-byte stores both the geometry type, and the dimensionality of the coord
     * 5 MultiLinestring
     * 6 MultiPolygon
     * 7 GeometryCollection
-    * 20 Homogeneous Group
-    * 21 Heterogeneous Group
 
-* Bits 6-7 store the coordinate dimension number, which is interpreted as:
+* Bits 5-8 store the "precision", which refers to the number of base-10 decimal places stored. 
 
-    | Value | Interpretation |
-    | ----- | -------------- |
-    | 0     | X/Y            |
-    | 1     | X/Y/Z          |
-    | 2     | X/Y/M          |
-    | 3     | X/Y/Z/M        |
+    * A **positive** precision implies retaining information to the right of the decimal place
 
-* Bit 8 stores the "empty" flag. If the bit is set, then the geometry is "empty" and there is no more content to follow.
+        * 41231.1231 at precision=2 would store 41231.12
+        * 41231.1231 at precision=1 would store 41231.1
+        * 41231.1231 at precision=0 would store 41231
+
+    * A **negative** precision implies rouding up to the left of the decimal place
+
+        * 41231.1231 at precision=-1 would store 41230  
+        * 41231.1231 at precision=-2 would store 41200  
+
+In order to support negative precisions, the precision number should be stored using zig-zag encoding (see "ZigZag Encode" below).
+
+* The geometry type can be read by masking out the lower four bits (`type & 0x0F`).
+* The precision can be read by masking out the top four bits (`(type & 0xF0) >> 4`).
 
   
-The geometry type can be read by masking out the lower five bits (`type & 0x1f`).
-
-The coordinate dimension can be read by masking out bits 6-7 and shifting them down (`(type & 0x60) >> 5`).
-
-The empty flat can be read by masking out bit 8 (`(type & 0x6=80) >> 7`).
-
 
 #### Metadata Header
 
@@ -87,23 +91,10 @@ The metadata byte of TWKB is mandatory, and encodes the following information:
 | 2       | Boolean        | Is there a size attribute?                      |
 | 3       | Boolean        | Is there an ID list?                            |
 | 4       | Boolean        | Is there extended precision information?        |
-| 5-8     | Signed Integer | Default precision for coordinates.              |
+| 5       | Boolean        | Is this an empty geometry?                      |
+| 6-8     | Boolean        | Unused                                          |
 
-The "precision" refers to the number of base-10 decimal places stored. 
 
-* A **positive** precision implies retaining information to the right of the decimal place
-
-    * 41231.1231 at precision=2 would store 41231.12  
-    * 41231.1231 at precision=1 would store 41231.1  
-    * 41231.1231 at precision=0 would store 41231
-
-* A **negative** precision implies rouding up to the left of the decimal place
-
-    * 41231.1231 at precision=-1 would store 41230  
-    * 41231.1231 at precision=-2 would store 41200  
-
-In order to support negative precisions, the precision number should be stored using zig-zag encoding (see "ZigZag Encode" below).
-	
     
 #### Extended Precision [Optional]
 
@@ -117,12 +108,17 @@ The extended precision byte holds:
 
 | Bits    | Role           | Purpose                                         | 
 | ------- | -------------- | ----------------------------------------------- |
-| 1-3     | Integer        | Precision for Z coordinates.                    |
-| 4-6     | Integer        | Precision for M coordinates.                    |
-| 7-8     | Undefined      |                                                 |
+| 1       | Boolean        | Has Z coordinates?                              |
+| 2       | Boolean        | Has M coordinates?                              |
+| 3-5     | Integer        | Precision for Z coordinates.                    |
+| 6-8     | Integer        | Precision for M coordinates.                    |
 
 The extended precision values are always positive (only deal with digits to the left of the decimal point)
 
+* The presence of Z can be read by masking out bit 1: `(extended & 0x01)`
+* The presence of M can be read by masking out bit 2: `(extended & 0x02)`
+* The value of Z precision can be read by masking and shifting bits 3-5: `(extended & 0x1C) >> 2`
+* The value of M precision can be read by masking and shifting bits 6-8: `(extended & 0xE0) >> 5`
 
 	
 #### Size [Optional]
