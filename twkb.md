@@ -107,12 +107,12 @@ For example, for data with X/Y/Z/T dimensions, using a geographic coordinate sys
 
 The extended precision byte holds:
 
-| Bits    | Role           | Purpose                                         | 
-| ------- | -------------- | ----------------------------------------------- |
-| 1       | Boolean        | Geometry has Z coordinates?                     |
-| 2       | Boolean        | Geometry has M coordinates?                     |
-| 3-5     | Integer        | Precision for Z coordinates.                    |
-| 6-8     | Integer        | Precision for M coordinates.                    |
+| Bits    | Role             | Purpose                                         | 
+| ------- | ---------------- | ----------------------------------------------- |
+| 1       | Boolean          | Geometry has Z coordinates?                     |
+| 2       | Boolean          | Geometry has M coordinates?                     |
+| 3-5     | Unsigned Integer | Precision for Z coordinates.                    |
+| 6-8     | Unsigned Integer | Precision for M coordinates.                    |
 
 The extended precision values are always positive (only deal with digits to the left of the decimal point)
 
@@ -124,7 +124,7 @@ The extended precision values are always positive (only deal with digits to the 
 	
 #### Size [Optional]
 
-**Size:** 1 varint (so, variable size)
+**Size:** 1 unsigned varint (so, variable size)
 
 If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The values is the size in bytes of the remainder of the geometry after the size attribute.
 
@@ -133,7 +133,7 @@ When encountered in collections, an application can use the size attribute to ad
 
 #### Bounding Box [Optional]
 
-**Size:** 2 varints per dimension (also variable size)
+**Size:** 2 signed varints per dimension (also variable size)
 
 Each dimension of a bounding box is represented by a pair of varints: 
 
@@ -147,7 +147,7 @@ So, for example:
 
 #### ID List [Optional]
 
-**Size:** N varints, one per sub-geometry
+**Size:** N unsigned varints, one per sub-geometry
 
 The TWKB collection types (multipoint, multilinestring, multipolygon, geometrycollection)  
 
@@ -239,7 +239,7 @@ Bounding boxes are permitted on points, but **discouraged** since they just dupl
     type_and_dims     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
     pointarray        varint[]
   
@@ -248,7 +248,7 @@ Bounding boxes are permitted on points, but **discouraged** since they just dupl
 
 A **linestring** has, in addition to the standard metadata:
 
-* an **npoints** varint giving the number of points in the linestring
+* an **npoints** unsigned varint giving the number of points in the linestring
 * if **npoints** is zero, the linestring is "empty", and there is no further content
 
 The layout is:
@@ -256,9 +256,9 @@ The layout is:
     type_and_dims     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
-    npoints           varint
+    npoints           uvarint
     pointarray        varint[]
 
 
@@ -266,10 +266,10 @@ The layout is:
 
 A **polygon** has, in addition to the standard metadata:
 
-* an **nrings** varint giving the number of rings in the polygon
+* an **nrings** unsigned varint giving the number of rings in the polygon
 * if **nrings** is zero, the polygon is "empty", and there is no further content
 * for each ring there will be
-    * an **npoints** varint giving the number of points in the ring
+    * an **npoints** unsigned varint giving the number of points in the ring
     * a pointarray of varints
     * rings are assumed to be implicitly closed, so the first and last point should not be the same
 
@@ -278,13 +278,13 @@ The layout is:
     type_and_dims     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
-    nrings            varint
-    npoints[0]        varint
+    nrings            uvarint
+    npoints[0]        uvarint
     pointarray[0]     varint[]
     ...
-    npoints[n]        varint
+    npoints[n]        uvarint
     pointarray[n]     varint[]
 
 
@@ -293,7 +293,7 @@ The layout is:
 A **multipoint** has, in addition to the standard metadata:
 
 * an optional "idlist" (if indicated in the metadata header)
-* an **npoints** varint giving the number of points in the multipoint
+* an **npoints** unsigned varint giving the number of points in the multipoint
 * if **npoints** is zero, the multipoint is "empty", and there is no further content
 
 The layout is:
@@ -301,9 +301,9 @@ The layout is:
     type_and_dims     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
-    npoints           varint
+    npoints           uvarint
     [idlist]          varint[]
     pointarray        varint[]
 
@@ -313,10 +313,10 @@ The layout is:
 A **multilinestring** has, in addition to the standard metadata:
 
 * an optional "idlist" (if indicated in the metadata header)
-* an **nlinestrings** varint giving the number of linestrings in the collection
+* an **nlinestrings** unsigned varint giving the number of linestrings in the collection
 * if **nlinestrings** is zero, the collection is "empty", and there is no further content
 * for each linestring there will be
-    * an **npoints** varint giving the number of points in the linestring
+    * an **npoints** unsigned varint giving the number of points in the linestring
     * a pointarray of varints
 
 The layout is:
@@ -324,14 +324,14 @@ The layout is:
     type_and_dims     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
-    nlinestrings      varint
+    nlinestrings      uvarint
     [idlist]          varint[]
-    npoints[0]        varint
+    npoints[0]        uvarint
     pointarray[0]     varint[]
     ...
-    npoints[n]        varint
+    npoints[n]        uvarint
     pointarray[n]     varint[]
 
 
@@ -340,12 +340,12 @@ The layout is:
 A **multipolygon** has, in addition to the standard metadata:
 
 * an optional "idlist" (if indicated in the metadata header)
-* an **npolygons** varint giving the number of polygons in the collection
+* an **npolygons** unsigned varint giving the number of polygons in the collection
 * if **npolygons** is zero, the collection is "empty", and there is no further content
 * for each polygon there will be
-    * an **nrings** varint giving the number of rings in the linestring
+    * an **nrings** unsigned varint giving the number of rings in the linestring
     * for each ring there will be
-        * an **npoints** varint giving the number of points in the ring
+        * an **npoints** unsigned varint giving the number of points in the ring
         * a pointarray of varints
         * rings are assumed to be implicitly closed, so the first and last point should not be the same
 
@@ -354,16 +354,16 @@ The layout is:
     type_and_dims     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
-    npolygons         varint
+    npolygons         uvarint
     [idlist]          varint[]
-    nrings[0]         varint
-    npoints[0][0]     varint
+    nrings[0]         uvarint
+    npoints[0][0]     uvarint
     pointarray[0][0]  varint[]
     ...
-    nrings[n]         varint
-    npoints[n][m]     varint
+    nrings[n]         uvarint
+    npoints[n][m]     uvarint
     pointarray[n][m]  varint[]
 
 
@@ -372,7 +372,7 @@ The layout is:
 A **geometrycollection** has, in addition to the standard metadata:
 
 * an optional "idlist" (if indicated in the metadata header)
-* an **ngeometries** varint giving the number of geometries in the collection
+* an **ngeometries** unsigned varint giving the number of geometries in the collection
 * for each geometry there will be a complete TWKB geometry, readable using the rules set out above
 
 The layout is:
