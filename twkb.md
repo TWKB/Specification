@@ -31,12 +31,12 @@ TWKB applies the following principles:
 
 Every TWKB geometry contains standard attributes at the top of the object.
 
-* A **metadata header** to indicate which optional attributes to expect, and the storage precision of all coordinates in the geometry.
 * A **type number** and **precision** byte to describe the OGC geometry type.
+* A **metadata header** to indicate which optional attributes to expect, and the storage precision of all coordinates in the geometry.
 * An optional **extended dimension** byte with information about existence and presence of Z & M dimensions.
 * An optional **size** in bytes of the object.
 * An optional **bounding box** of the geometry.
-* An optional **unique integer array** of sub-components for multi-geometries.
+* An optional **unique identifier array** of sub-components for multi-geometries.
 
 
 #### Type & Precision
