@@ -68,7 +68,7 @@ The type-byte stores both the geometry type, and the dimensionality of the coord
         * 41231.1231 at precision=1 would store 41231.1
         * 41231.1231 at precision=0 would store 41231
 
-    * A **negative** precision implies rouding up to the left of the decimal place
+    * A **negative** precision implies rounding up to the left of the decimal place
 
         * 41231.1231 at precision=-1 would store 41230  
         * 41231.1231 at precision=-2 would store 41200  
@@ -126,7 +126,7 @@ The extended precision values are always positive (only deal with digits to the 
 
 **Size:** 1 unsigned varint (so, variable size)
 
-If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The values is the size in bytes of the remainder of the geometry after the size attribute.
+If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The value is the size in bytes of the *remainder of the geometry after the size attribute*.
 
 When encountered in collections, an application can use the size attribute to advance the read pointer the the start of the next geometry. This can be used for a quick scan through a set of geometries, for reading just bounding boxes, or to distibute the read process to different threads.
 
@@ -147,7 +147,7 @@ So, for example:
 
 #### ID List [Optional]
 
-**Size:** N unsigned varints, one per sub-geometry
+**Size:** N signed varints, one per sub-geometry
 
 The TWKB collection types (multipoint, multilinestring, multipolygon, geometrycollection)  
 
