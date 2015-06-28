@@ -236,7 +236,7 @@ Because **points** only have one coordinate, the coordinates will be the true va
 
 Bounding boxes are permitted on points, but **discouraged** since they just duplicate the values already available in the point coordinate. Similarly, unless the point is part of a collection (where random access is a possible use case), the size should also be omitted.
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            uvarint
@@ -253,7 +253,7 @@ A **linestring** has, in addition to the standard metadata:
 
 The layout is:
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            uvarint
@@ -275,7 +275,7 @@ A **polygon** has, in addition to the standard metadata:
 
 The layout is:
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            uvarint
@@ -298,7 +298,7 @@ A **multipoint** has, in addition to the standard metadata:
 
 The layout is:
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            uvarint
@@ -321,7 +321,7 @@ A **multilinestring** has, in addition to the standard metadata:
 
 The layout is:
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            uvarint
@@ -351,7 +351,7 @@ A **multipolygon** has, in addition to the standard metadata:
 
 The layout is:
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            uvarint
@@ -377,7 +377,7 @@ A **geometrycollection** has, in addition to the standard metadata:
 
 The layout is:
 
-    type_and_dims     byte
+    type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
     [size]            varint
