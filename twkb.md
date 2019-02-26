@@ -126,7 +126,7 @@ The extended precision values are always positive (only deal with digits to the 
 
 **Size:** 1 unsigned varint (so, variable size)
 
-If the size attribute bit is set in the metadata header, a varInt with size infoformation comes next. The value is the size in bytes of the *remainder of the geometry after the size attribute*.
+If the size attribute bit is set in the metadata header, a varInt with size information comes next. The value is the size in bytes of the *remainder of the geometry after the size attribute*.
 
 When encountered in collections, an application can use the size attribute to advance the read pointer the the start of the next geometry. This can be used for a quick scan through a set of geometries, for reading just bounding boxes, or to distibute the read process to different threads.
 
