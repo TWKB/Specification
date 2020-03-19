@@ -373,7 +373,7 @@ A **geometrycollection** has, in addition to the standard metadata:
 
 * an optional "idlist" (if indicated in the metadata header)
 * an **ngeometries** unsigned varint giving the number of geometries in the collection
-* for each geometry there will be a complete TWKB geometry, readable using the rules set out above
+* for each geometry there will be a complete TWKB geometry (with it's own first absolute coordinate), readable using the rules set out above
 
 The layout is:
 
