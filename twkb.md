@@ -93,7 +93,8 @@ The metadata byte of TWKB is mandatory, and encodes the following information:
 | 3       | Boolean        | Is there an ID list?                            |
 | 4       | Boolean        | Is there extended precision information?        |
 | 5       | Boolean        | Is this an empty geometry?                      |
-| 6-8     | Boolean        | Unused                                          |
+| 6       | Boolean        | Is there triangle information?                      |
+| 7-8     | Boolean        | Unused                                          |
 
 
     
@@ -156,6 +157,12 @@ The TWKB collection types (multipoint, multilinestring, multipolygon, geometryco
 
 In the latter case, it makes sense to include a unique identifier for each sub-geometry that is being wrapped into the collection. The "idlist" attribute is an array of varint that has one varint for each sub-geometry in the collection.
 
+
+#### Triangle List [Optional]
+
+**Size:** N unsigned varints, 3 per triangle
+
+More information in separate document triangels.md
 
 ## Description of Types
 
