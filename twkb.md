@@ -343,7 +343,7 @@ A **multipolygon** has, in addition to the standard metadata:
 * an **npolygons** unsigned varint giving the number of polygons in the collection
 * if **npolygons** is zero, the collection is "empty", and there is no further content
 * for each polygon there will be
-    * an **nrings** unsigned varint giving the number of rings in the linestring
+    * an **nrings** unsigned varint giving the number of rings in the polygon
     * for each ring there will be
         * an **npoints** unsigned varint giving the number of points in the ring
         * a pointarray of varints
@@ -380,7 +380,7 @@ The layout is:
     type_and_prec     byte
     metadata_header   byte
     [extended_dims]   byte
-    [size]            varint
+    [size]            uvarint
     [bounds]          bbox
     ngeometries       varint
     [idlist]          varint[]
